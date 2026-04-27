@@ -1,0 +1,55 @@
+name: Create Branch From Issue
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Create branch name
+        id: branch
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+
+          SAFE_TITLE=$(echo "$ISSUE_TITLE" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's/[^a-z0-9가-힣]/-/g' \
+            | sed 's/-\+/-/g' \
+            | sed 's/^-//' \
+            | sed 's/-$//')
+
+          BRANCH_NAME="feature/${ISSUE_NUMBER}-${SAFE_TITLE}"
+
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create and push branch
+        run: |
+          git checkout -b "${{ steps.branch.outputs.branch_name }}"
+          git push origin "${{ steps.branch.outputs.branch_name }}"
+
+      - name: Comment branch name
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = "${{ steps.branch.outputs.branch_name }}";
+            const repo = context.repo;
+
+            github.rest.issues.createComment({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: context.issue.number,
+              body: `브랜치가 자동 생성되었습니다.\n\n\`${branchName}\``
+            });
