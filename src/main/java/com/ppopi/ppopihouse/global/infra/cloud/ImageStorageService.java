@@ -1,4 +1,4 @@
-package com.ppopi.ppopihouse.global.services;
+package com.ppopi.ppopihouse.global.infra.cloud;
 
 import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
