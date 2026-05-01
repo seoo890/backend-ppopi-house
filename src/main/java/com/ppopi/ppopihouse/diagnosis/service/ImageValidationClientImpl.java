@@ -1,7 +1,7 @@
-
 package com.ppopi.ppopihouse.diagnosis.service;
 
 import com.ppopi.ppopihouse.diagnosis.dto.external.ImageValidationResponse;
+import com.ppopi.ppopihouse.diagnosis.service.ImageValidationClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
