@@ -1,7 +1,9 @@
 package com.ppopi.ppopihouse.auth.controller;
 
 import com.ppopi.ppopihouse.auth.dto.request.KakaoLoginRequest;
+import com.ppopi.ppopihouse.auth.dto.request.RefreshTokenRequest;
 import com.ppopi.ppopihouse.auth.dto.response.LoginResponse;
+import com.ppopi.ppopihouse.auth.dto.response.TokenResponse;
 import com.ppopi.ppopihouse.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,4 +19,10 @@ public class AuthController {
     public LoginResponse kakaoLogin(@RequestBody KakaoLoginRequest request) {
         return authService.kakaoLogin(request.getAccessToken());
     }
+
+    @PostMapping("/reissue")
+    public TokenResponse reissue(@RequestBody RefreshTokenRequest request) {
+        return authService.reissue(request.getRefreshToken());
+    }
+
 }

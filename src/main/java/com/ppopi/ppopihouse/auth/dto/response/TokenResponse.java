@@ -5,10 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class LoginResponse {
-
-    private Long memberId;
-    private Boolean isOnboarding;
+public class TokenResponse {
     private String accessToken;
     private String refreshToken;
 }

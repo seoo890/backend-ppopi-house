@@ -1,5 +1,6 @@
 package com.ppopi.ppopihouse.global.infra.cloud;
 
+
 import com.cloudinary.Cloudinary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -7,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +20,10 @@ public class ImageStorageService {
         try {
             Map uploadResult = cloudinary.uploader().upload(
                     image.getBytes(),
-                    Map.of("folder", "ppopi/diagnosis")
+                    Map.of(
+                            "folder", "ppopi/diagnosis",
+                            "public_id", UUID.randomUUID().toString()
+                    )
             );
 
             return uploadResult.get("secure_url").toString();

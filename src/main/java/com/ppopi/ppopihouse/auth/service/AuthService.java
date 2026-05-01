@@ -1,7 +1,10 @@
 package com.ppopi.ppopihouse.auth.service;
 
+import com.ppopi.ppopihouse.auth.config.JwtProperties;
 import com.ppopi.ppopihouse.auth.dto.response.KakaoUserResponse;
 import com.ppopi.ppopihouse.auth.dto.response.LoginResponse;
+import com.ppopi.ppopihouse.auth.dto.response.TokenResponse;
+import com.ppopi.ppopihouse.auth.repository.RefreshTokenRepository;
 import com.ppopi.ppopihouse.member.domain.Member;
 import com.ppopi.ppopihouse.member.repository.MemberRepository;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
@@ -15,9 +18,13 @@ public class AuthService {
     private final KakaoClient kakaoClient;
     private final MemberRepository memberRepository;
     private final PetRepository petRepository;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtProperties jwtProperties;
 
-    public LoginResponse kakaoLogin(String accessToken) {
-        KakaoUserResponse kakaoUser = kakaoClient.getUserInfo(accessToken);
+    public LoginResponse kakaoLogin(String kakaoAccessToken) {
+
+        KakaoUserResponse kakaoUser = kakaoClient.getUserInfo(kakaoAccessToken);
 
         String kakaoUserId = String.valueOf(kakaoUser.getId());
 
@@ -31,6 +38,53 @@ public class AuthService {
         boolean hasPet = petRepository.existsByMember(member);
         boolean isOnboarding = !hasPet;
 
-        return new LoginResponse(member.getMemberId(), isOnboarding);
+        // ✅ 토큰 생성
+        String accessToken = jwtTokenProvider.createAccessToken(member.getMemberId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(member.getMemberId());
+
+        // ✅ Redis 저장
+        refreshTokenRepository.save(
+                member.getMemberId(),
+                refreshToken,
+                jwtProperties.getRefreshExpiration()
+        );
+
+        return new LoginResponse(
+                member.getMemberId(),
+                isOnboarding,
+                accessToken,
+                refreshToken
+        );
     }
+
+    public TokenResponse reissue(String refreshToken) {
+
+        if (!jwtTokenProvider.validate(refreshToken)) {
+            throw new RuntimeException("invalid refresh token");
+        }
+
+        Long memberId = jwtTokenProvider.getMemberId(refreshToken);
+
+        String savedToken = refreshTokenRepository.find(memberId);
+
+        if (savedToken == null || !savedToken.equals(refreshToken)) {
+            throw new RuntimeException("refresh token mismatch");
+        }
+
+        String newAccessToken = jwtTokenProvider.createAccessToken(memberId);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId);
+
+        refreshTokenRepository.save(
+                memberId,
+                newRefreshToken,
+                jwtProperties.getRefreshExpiration()
+        );
+
+        return new TokenResponse(newAccessToken, newRefreshToken);
+    }
+
+    public void logout(Long memberId) {
+        refreshTokenRepository.delete(memberId);
+    }
+
 }

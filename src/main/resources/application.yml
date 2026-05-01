@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 server:
   port: 8080
 
@@ -21,3 +22,8 @@ springdoc:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
+=======
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+>>>>>>> b9a705a (feat(jwt, security): jwt security 추가)
