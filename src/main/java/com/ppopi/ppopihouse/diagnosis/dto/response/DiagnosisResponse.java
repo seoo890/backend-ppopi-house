@@ -1,3 +1,4 @@
+
 package com.ppopi.ppopihouse.diagnosis.dto.response;
 
 import lombok.AllArgsConstructor;

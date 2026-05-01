@@ -1,3 +1,4 @@
+
 package com.ppopi.ppopihouse.diagnosis.service;
 
 import com.ppopi.ppopihouse.diagnosis.dto.external.AiDiagnosisRequest;
