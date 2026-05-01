@@ -20,7 +20,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DiagnosisServiceImpl {
+public class DiagnosisService {
 
     private final PetRepository petRepository;
     private final DiagnosisRepository diagnosisRepository;
