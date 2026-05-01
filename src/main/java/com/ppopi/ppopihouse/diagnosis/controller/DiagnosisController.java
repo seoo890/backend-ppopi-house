@@ -1,4 +1,3 @@
-
 package com.ppopi.ppopihouse.diagnosis.controller;
 
 import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
