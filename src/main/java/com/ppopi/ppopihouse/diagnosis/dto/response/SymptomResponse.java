@@ -12,6 +12,6 @@ public class SymptomResponse {
     private String name;
 
     public static SymptomResponse from(EyeSymptom symptom) {
-        return new SymptomResponse(symptom.getId(), symptom.getName());
+        return new SymptomResponse(symptom.getId(), symptom.getDescription());
     }
 }

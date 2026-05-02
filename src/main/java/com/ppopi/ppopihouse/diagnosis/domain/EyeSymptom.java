@@ -18,11 +18,11 @@ public enum EyeSymptom {
     PAIN_SUSPECTED(7L, "통증 의심");
 
     private final Long id;
-    private final String name;
+    private final String description;
 
-    EyeSymptom(Long id, String name) {
+    EyeSymptom(Long id, String description) {
         this.id = id;
-        this.name = name;
+        this.description = description;
     }
 
     private static final Map<Long, EyeSymptom> MAP =
