@@ -2,6 +2,10 @@ package com.ppopi.ppopihouse.diagnosis.domain;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Getter
 public enum EyeSymptom {
 
@@ -21,13 +25,16 @@ public enum EyeSymptom {
         this.name = name;
     }
 
+    private static final Map<Long, EyeSymptom> MAP =
+            Arrays.stream(values())
+                    .collect(Collectors.toMap(EyeSymptom::getId, s -> s));
+
     public static EyeSymptom fromId(Long id) {
-        for (EyeSymptom symptom : values()) {
-            if (symptom.id.equals(id)) {
-                return symptom;
-            }
+        EyeSymptom symptom = MAP.get(id);
+        if (symptom == null) {
+            throw new IllegalArgumentException("존재하지 않는 증상입니다.");
         }
-        throw new IllegalArgumentException("존재하지 않는 증상입니다.");
+        return symptom;
     }
 
 }
