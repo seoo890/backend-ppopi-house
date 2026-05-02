@@ -1,5 +1,6 @@
 package com.ppopi.ppopihouse.hospital.service;
 
+import com.ppopi.ppopihouse.hospital.domain.Hospital;
 import com.ppopi.ppopihouse.hospital.dto.projection.HospitalDistanceProjection;
 import com.ppopi.ppopihouse.hospital.dto.request.HospitalSearchRequest;
 import com.ppopi.ppopihouse.hospital.dto.response.HospitalDetailResponse;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,16 +40,9 @@ public class HospitalServiceImpl implements HospitalService {
     }
 
     @Override
-    public HospitalDetailResponse getHospital(Long hospitalId, double centerLat, double centerLng) {
-        HospitalDistanceProjection hospital = hospitalRepository.findHospitalDetailWithDistance(
-                hospitalId,
-                centerLat,
-                centerLng
-        );
-
-        if (hospital == null) {
-            throw new IllegalArgumentException("존재하지 않는 병원입니다.");
-        }
+    public HospitalDetailResponse getHospital(Long hospitalId) {
+        Hospital hospital = hospitalRepository.findById(hospitalId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 병원입니다."));
 
         return HospitalDetailResponse.from(hospital);
     }

@@ -1,6 +1,6 @@
 package com.ppopi.ppopihouse.hospital.dto.response;
 
-import com.ppopi.ppopihouse.hospital.dto.projection.HospitalDistanceProjection;
+import com.ppopi.ppopihouse.hospital.domain.Hospital;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -16,19 +16,17 @@ public class HospitalDetailResponse {
     private boolean is24hr;
     private double latitude;
     private double longitude;
-    private long distanceMeter;
 
-    public static HospitalDetailResponse from(HospitalDistanceProjection hospital) {
+    public static HospitalDetailResponse from(Hospital hospital) {
         return new HospitalDetailResponse(
                 hospital.getHospitalId(),
                 hospital.getName(),
                 hospital.getAddress(),
                 hospital.getCallNumber(),
                 hospital.getBusinessHours(),
-                Boolean.TRUE.equals(hospital.getIs24hr()),
+                hospital.is24hr(),
                 hospital.getLatitude(),
-                hospital.getLongitude(),
-                hospital.getDistanceMeter()
+                hospital.getLongitude()
         );
     }
 }
