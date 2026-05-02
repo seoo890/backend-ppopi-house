@@ -1,4 +1,4 @@
-package com.ppopi.ppopihouse.hospital.dto;
+package com.ppopi.ppopihouse.hospital.dto.projection;
 
 public interface HospitalDistanceProjection {
 
