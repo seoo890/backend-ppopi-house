@@ -20,7 +20,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
                 h.is_24hr AS is24hr,
                 h.latitude AS latitude,
                 h.longitude AS longitude,
-                ROUND(
+                CAST(ROUND(
                     6371000 * ACOS(
                         LEAST(1, GREATEST(-1,
                             COS(RADIANS(:centerLat)) *
@@ -30,7 +30,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
                             SIN(RADIANS(h.latitude))
                         ))
                     )
-                ) AS distanceMeter
+                ) AS SIGNED) AS distanceMeter
             FROM hospital h
             WHERE h.latitude BETWEEN :southWestLat AND :northEastLat
               AND h.longitude BETWEEN :southWestLng AND :northEastLng
@@ -59,7 +59,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
                 h.is_24hr AS is24hr,
                 h.latitude AS latitude,
                 h.longitude AS longitude,
-                ROUND(
+                CAST(ROUND(
                     6371000 * ACOS(
                         LEAST(1, GREATEST(-1,
                             COS(RADIANS(:centerLat)) *
@@ -69,7 +69,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
                             SIN(RADIANS(h.latitude))
                         ))
                     )
-                ) AS distanceMeter
+                ) AS SIGNED) AS distanceMeter
             FROM hospital h
             WHERE h.hospital_id = :hospitalId
             """, nativeQuery = true)
