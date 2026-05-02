@@ -9,9 +9,9 @@ import lombok.Getter;
 public class SymptomResponse {
 
     private Long id;
-    private String name;
+    private String description;
 
     public static SymptomResponse from(EyeSymptom symptom) {
-        return new SymptomResponse(symptom.getId(), symptom.getName());
+        return new SymptomResponse(symptom.getId(), symptom.getDescription());
     }
 }

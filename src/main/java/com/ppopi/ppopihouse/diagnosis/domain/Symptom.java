@@ -18,4 +18,5 @@ public class Symptom {
 
     @Column(nullable = false)
     private String name;
+
 }
