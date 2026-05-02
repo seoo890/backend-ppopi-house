@@ -6,7 +6,7 @@ spring:
     name: ppopihouse
 
   profiles:
-    active: local
+    active: prod
 
   sql:
     init:
