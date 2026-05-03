@@ -6,6 +6,7 @@ import com.ppopi.ppopihouse.diagnosis.dto.external.AiDiagnosisRequest;
 import com.ppopi.ppopihouse.diagnosis.dto.external.AiDiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.dto.external.ImageValidationResponse;
 import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
+import com.ppopi.ppopihouse.diagnosis.dto.response.RecentDiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.repository.DiagnosisRepository;
 import com.ppopi.ppopihouse.global.infra.cloud.ImageStorageService;
 import com.ppopi.ppopihouse.pet.domain.Pet;
@@ -82,6 +83,21 @@ public class DiagnosisService {
                 aiResponse.getGuidanceMessage(),
                 aiResponse.getGuidanceAction()
         );
+    }
+
+    public RecentDiagnosisResponse getTodayDiagnosis(Long memberId, Long petId, LocalDate date) {
+
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
+
+        if (!pet.getMember().getMemberId().equals(memberId)) {
+            throw new SecurityException("해당 반려동물에 대한 접근 권한이 없습니다.");
+        }
+
+        return diagnosisRepository
+                .findTopByPet_PetIdAndDiagnosisDateOrderByDiagnosisIdDesc(petId, date)
+                .map(RecentDiagnosisResponse::from)
+                .orElseGet(RecentDiagnosisResponse::empty);
     }
 
     private int calculateAge(int birthYear) {
