@@ -13,20 +13,24 @@ public class HospitalDetailResponse {
     private String address;
     private String callNumber;
     private String businessHours;
+    private String operationLabel;
     private boolean is24hr;
-    private double latitude;
-    private double longitude;
+    private long distanceMeter;
 
-    public static HospitalDetailResponse from(Hospital hospital) {
+    public static HospitalDetailResponse from(
+            Hospital hospital,
+            long distanceMeter,
+            String operationLabel
+    ) {
         return new HospitalDetailResponse(
                 hospital.getHospitalId(),
                 hospital.getName(),
                 hospital.getAddress(),
                 hospital.getCallNumber(),
                 hospital.getBusinessHours(),
+                operationLabel,
                 hospital.is24hr(),
-                hospital.getLatitude(),
-                hospital.getLongitude()
+                distanceMeter
         );
     }
 }
