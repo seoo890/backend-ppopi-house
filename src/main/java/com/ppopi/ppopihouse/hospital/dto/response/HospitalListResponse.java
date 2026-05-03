@@ -13,7 +13,6 @@ public class HospitalListResponse {
     private double latitude;
     private double longitude;
     private boolean is24hr;
-    private long distanceMeter;
 
     public static HospitalListResponse from(HospitalDistanceProjection hospital) {
         return new HospitalListResponse(
@@ -21,8 +20,7 @@ public class HospitalListResponse {
                 hospital.getName(),
                 hospital.getLatitude(),
                 hospital.getLongitude(),
-                Boolean.TRUE.equals(hospital.getIs24hr()),
-                hospital.getDistanceMeter()
+                Boolean.TRUE.equals(hospital.getIs24hr())
         );
     }
 }
