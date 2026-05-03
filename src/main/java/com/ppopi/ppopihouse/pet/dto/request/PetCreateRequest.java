@@ -10,7 +10,7 @@ public class PetCreateRequest {
     private String name;
     private String species;
     private String breed;
-    private int birthYear;
+    private int age;
     private String sex;
     private int color;
 }
