@@ -34,9 +34,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
             FROM hospital h
             WHERE h.latitude BETWEEN :southWestLat AND :northEastLat
               AND h.longitude BETWEEN :southWestLng AND :northEastLng
-              AND (:emergencyOnly = false OR h.is_24hr = true)
             ORDER BY distanceMeter ASC
-            LIMIT :limit
             """, nativeQuery = true)
     List<HospitalDistanceProjection> findHospitalsInBoundsOrderByDistance(
             @Param("southWestLat") double southWestLat,
@@ -44,9 +42,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
             @Param("southWestLng") double southWestLng,
             @Param("northEastLng") double northEastLng,
             @Param("centerLat") double centerLat,
-            @Param("centerLng") double centerLng,
-            @Param("emergencyOnly") boolean emergencyOnly,
-            @Param("limit") int limit
+            @Param("centerLng") double centerLng
     );
 
 }

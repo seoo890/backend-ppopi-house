@@ -29,9 +29,7 @@ public class HospitalServiceImpl implements HospitalService {
                         request.getBounds().getSouthwest().getLng(),
                         request.getBounds().getNortheast().getLng(),
                         request.getCenter().getLat(),
-                        request.getCenter().getLng(),
-                        Boolean.TRUE.equals(request.getEmergencyOnly()),
-                        request.getLimit() == null ? DEFAULT_LIMIT : request.getLimit()
+                        request.getCenter().getLng()
                 )
                 .stream()
                 .map(HospitalListResponse::from)
