@@ -75,12 +75,6 @@ public class DiaryController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * 현재 로그인한 회원의 반려동물 목록 조회
-     */
-    @GetMapping("/pets")
-    public ResponseEntity<List<DiaryDto.PetSummary>> getMyPets(
-            @AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(diaryService.findPetSummaries(memberId));
-    }
+
+
 }

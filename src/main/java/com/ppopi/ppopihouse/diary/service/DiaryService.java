@@ -1,6 +1,7 @@
 package com.ppopi.ppopihouse.diary.service;
 
 import com.ppopi.ppopihouse.diagnosis.domain.Diagnosis;
+import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.repository.DiagnosisRepository;
 import com.ppopi.ppopihouse.diary.domain.*;
 import com.ppopi.ppopihouse.diary.dto.DiaryDto;
@@ -68,13 +69,17 @@ public class DiaryService {
 
         return entries.stream().map(entry -> {
             List<DiaryEntryCheck> checks = entryCheckRepository.findAllByDiaryEntry(entry);
+
+            // [피드백 반영] Diagnosis 엔티티를 DiagnosisResponse DTO로 변환
+            DiagnosisResponse diagnosisResponse = convertToDiagnosisResponse(entry.getDiagnosis());
+
             return DiaryResponseDto.DayDetailResponse.builder()
                     .diaryId(entry.getDiaryId())
                     .petId(entry.getPet().getPetId())
                     .petName(entry.getPet().getName())
                     .entryDate(entry.getEntryDate())
                     .memo(entry.getMemo())
-                    .diagnosis(entry.getDiagnosis())
+                    .diagnosis(diagnosisResponse) // 엔티티 대신 DTO 주입
                     .checkIds(checks.stream().map(c -> c.getCheckCode().getCheckId()).collect(Collectors.toList()))
                     .checkNames(checks.stream().map(c -> c.getCheckCode().getCheckName()).collect(Collectors.toList()))
                     .build();
@@ -82,11 +87,26 @@ public class DiaryService {
     }
 
     /**
+     * 엔티티를 DTO로 변환하는 private 헬퍼 메서드
+     */
+    private DiagnosisResponse convertToDiagnosisResponse(Diagnosis diagnosis) {
+        if (diagnosis == null) return null;
+
+        return new DiagnosisResponse(
+                diagnosis.getDisease().getDiseaseName(), // EyeDiseaseCode 엔티티에서 질병명 추출
+                diagnosis.getTriageKey(),               // triage
+                diagnosis.getTriageConfidence(),        // confidence
+                diagnosis.getGuideWarn(),               // affectedArea (병변/경고 구역)
+                diagnosis.getGuideMsg(),                // description (설명/가이드 메시지)
+                diagnosis.getGuideAction()              // action (대응 지침)
+        );
+    }
+
+    /**
      * 다이어리 생성
      */
     @Transactional
     public void saveDiary(Long memberId, DiaryDto.CreateRequest request) {
-        // 1. 소유권 검증: 요청된 petId가 현재 로그인한 유저의 것인지 확인
         Pet pet = petRepository.findById(request.getPetId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
 
@@ -94,23 +114,14 @@ public class DiaryService {
             throw new SecurityException("해당 반려동물에 대한 접근 권한이 없습니다.");
         }
 
-        // 2. 진단 정보 조회 (있는 경우)
-        Diagnosis diagnosis = null;
-        if (request.getDiagnosisId() != null) {
-            diagnosis = diagnosisRepository.findById(request.getDiagnosisId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 진단 기록입니다."));
-        }
-
-        // 3. 다이어리 본체 저장
         DiaryEntry entry = new DiaryEntry();
         entry.setPet(pet);
-        entry.setDiagnosis(diagnosis);
-        entry.setEntryDate(request.getEntryDate());
+        // [피드백 반영] 클라이언트 전달값 대신 서버의 현재 날짜 사용
+        entry.setEntryDate(LocalDate.now());
         entry.setMemo(request.getMemo());
 
         diaryRepository.save(entry);
 
-        // 4. 체크리스트 저장
         if (request.getCheckIds() != null && !request.getCheckIds().isEmpty()) {
             saveAllChecks(entry, request.getCheckIds());
         }
@@ -152,21 +163,7 @@ public class DiaryService {
         diaryRepository.delete(entry);
     }
 
-    /**
-     * 반려동물 목록 조회
-     */
-    public List<DiaryDto.PetSummary> findPetSummaries(Long memberId) {
-        return petRepository.findAllByMember_MemberId(memberId).stream()
-                .map(pet -> DiaryDto.PetSummary.builder()
-                        .petId(pet.getPetId())
-                        .name(pet.getName())
-                        .species(pet.getSpecies() != null ? pet.getSpecies().toString() : null)
-                        .breed(pet.getBreed())
-                        .age(2026 - pet.getBirthYear())
-                        .sex(pet.getSex() != null ? pet.getSex().toString() : null)
-                        .build())
-                .collect(Collectors.toList());
-    }
+
 
     private void saveAllChecks(DiaryEntry entry, List<Long> checkIds) {
         List<DiaryEntryCheck> checks = checkIds.stream().map(checkId -> {

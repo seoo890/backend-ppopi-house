@@ -12,23 +12,19 @@ public class DiaryDto {
     public static class PetSummary {
         private Long petId;
         private String name;
-        private String species;
-        private String breed;
-        private Integer age;
-        private String sex;
+        private Integer color;
     }
 
     @Getter @Setter
     public static class CreateRequest {
         private Long petId;
-        private Long diagnosisId;
-        private LocalDate entryDate;
         private String memo;
         private List<Long> checkIds;
     }
 
     @Getter @Setter
     public static class UpdateRequest {
+        private Long diaryId;
         private String memo;
         private List<Long> checkIds;
     }

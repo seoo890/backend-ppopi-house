@@ -1,6 +1,7 @@
 package com.ppopi.ppopihouse.diary.dto;
 
 import com.ppopi.ppopihouse.diagnosis.domain.Diagnosis;
+import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
 import lombok.Builder;
 import lombok.Getter;
 import java.time.LocalDate;
@@ -30,6 +31,6 @@ public class DiaryResponseDto {
         private String memo;
         private List<Long> checkIds;      // 체크리스트 ID 목록
         private List<String> checkNames;  // 체크리스트 이름 목록 (화면 표시용)
-        private Diagnosis diagnosis;      // 진단 객체 전체
+        private DiagnosisResponse diagnosis; // 엔티티 대신 진단 응답 DTO를 사용
     }
 }
