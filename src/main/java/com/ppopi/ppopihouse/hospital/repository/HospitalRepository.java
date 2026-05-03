@@ -30,7 +30,7 @@ public interface HospitalRepository extends JpaRepository<Hospital, Long> {
                             SIN(RADIANS(h.latitude))
                         ))
                     )
-                ) AS SIGNED) AS distanceMeter
+                ) AS BIGINT) AS distanceMeter
             FROM hospital h
             WHERE h.latitude BETWEEN :southWestLat AND :northEastLat
               AND h.longitude BETWEEN :southWestLng AND :northEastLng
