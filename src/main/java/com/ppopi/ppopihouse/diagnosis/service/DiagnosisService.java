@@ -49,7 +49,7 @@ public class DiagnosisService {
 
         List<String> symptoms = symptomIds.stream()
                 .map(EyeSymptom::fromId)
-                .map(EyeSymptom::getName)
+                .map(EyeSymptom::getDescription)
                 .toList();
 
         AiDiagnosisRequest aiRequest = new AiDiagnosisRequest(

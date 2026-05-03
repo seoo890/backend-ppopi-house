@@ -23,7 +23,6 @@ public class AuthService {
     private final JwtProperties jwtProperties;
 
     public LoginResponse kakaoLogin(String kakaoAccessToken) {
-
         KakaoUserResponse kakaoUser = kakaoClient.getUserInfo(kakaoAccessToken);
 
         String kakaoUserId = String.valueOf(kakaoUser.getId());
