@@ -25,8 +25,11 @@ public class HospitalController {
 
     @GetMapping("/{hospitalId}")
     public HospitalDetailResponse getHospital(
-            @PathVariable Long hospitalId
+            @PathVariable Long hospitalId,
+            @RequestParam double centerLat,
+            @RequestParam double centerLng
     ) {
-        return hospitalService.getHospital(hospitalId);
+        return hospitalService.getHospital(hospitalId, centerLat, centerLng);
     }
+
 }

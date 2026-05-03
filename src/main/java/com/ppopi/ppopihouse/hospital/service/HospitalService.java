@@ -10,5 +10,5 @@ public interface HospitalService {
 
     List<HospitalListResponse> getHospitals(HospitalSearchRequest request);
 
-    HospitalDetailResponse getHospital(Long hospitalId);
+    HospitalDetailResponse getHospital(Long hospitalId, double centerLat, double centerLng);
 }
