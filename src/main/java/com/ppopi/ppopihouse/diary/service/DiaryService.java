@@ -107,6 +107,7 @@ public class DiaryService {
      */
     @Transactional
     public void saveDiary(Long memberId, DiaryDto.CreateRequest request) {
+        // 1. 반려동물 존재 및 권한 검증
         Pet pet = petRepository.findById(request.getPetId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
 
@@ -114,14 +115,23 @@ public class DiaryService {
             throw new SecurityException("해당 반려동물에 대한 접근 권한이 없습니다.");
         }
 
+        // 2. 진단 기록이 있다면 조회 (Optional 처리)
+        Diagnosis diagnosis = null;
+        if (request.getDiagnosisId() != null) {
+            diagnosis = diagnosisRepository.findById(request.getDiagnosisId())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 진단 기록입니다."));
+        } // 없으면 진단은 그대로 null
+
+        // 3. 다이어리 엔티티 생성 및 저장
         DiaryEntry entry = new DiaryEntry();
         entry.setPet(pet);
-        // [피드백 반영] 클라이언트 전달값 대신 서버의 현재 날짜 사용
-        entry.setEntryDate(LocalDate.now());
+        entry.setDiagnosis(diagnosis);
+        entry.setEntryDate(LocalDate.now()); // 서버 현재 날짜 적용
         entry.setMemo(request.getMemo());
 
         diaryRepository.save(entry);
 
+        // 4. 체크리스트 항목 저장
         if (request.getCheckIds() != null && !request.getCheckIds().isEmpty()) {
             saveAllChecks(entry, request.getCheckIds());
         }
