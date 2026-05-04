@@ -93,17 +93,15 @@ public class DiaryService {
         if (diagnosis == null) return null;
 
         return new DiagnosisResponse(
-                new DiagnosisResponse.Summary(
-                        diseaseName,
-                        triage,
-                        Math.round(confidence * 100)
-                ),
-                new DiagnosisResponse.ResultCard(
-                        diseaseName + "이 의심됩니다",
-                        description,
-                        "진료 권장",
-                        action
-                )
+                diagnosis.getImageUrl(),
+                formatStatus(diagnosis.getTriageKey()),
+                diagnosis.getDisease().getDiseaseName(),
+                formatAffectedArea(diagnosis.getDisease().getAffectedArea()),
+                formatConfidence(diagnosis.getTriageConfidence()),
+                diagnosis.getGuideAction(),
+                diagnosis.getGuideMsg(),
+                diagnosis.getGuideWarn()
+
         );
     }
 
@@ -197,5 +195,35 @@ public class DiaryService {
         }).collect(Collectors.toList());
 
         entryCheckRepository.saveAll(checks);
+    }
+
+    private String formatStatus(String triage) {
+        if (triage == null) return "Unknown";
+
+        return switch (triage.toLowerCase()) {
+            case "normal" -> "Normal";
+            case "soon" -> "Soon";
+            case "urgent" -> "Urgent";
+            case "emergency" -> "Emergency";
+            default -> triage;
+        };
+    }
+
+    private String formatAffectedArea(String area) {
+        if (area == null) return null;
+
+        return switch (area) {
+            case "cornea_ulcerative", "cornea_nonulcerative" -> "각막";
+            case "conjunctiva" -> "결막";
+            case "eyelid" -> "눈꺼풀";
+            case "lens_vitreous" -> "수정체/유리체";
+            case "tear" -> "눈물";
+            case "normal" -> "정상";
+            default -> area;
+        };
+    }
+
+    private int formatConfidence(double confidence) {
+        return (int) Math.round(confidence * 100);
     }
 }

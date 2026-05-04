@@ -4,47 +4,47 @@ import com.ppopi.ppopihouse.diagnosis.domain.Diagnosis;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 public class RecentDiagnosisResponse {
 
     private boolean hasDiagnosis;
 
-    private Long diagnosisId;
     private String imageUrl;
-
-    private Long diseaseId;
+    private String triage;
     private String diseaseName;
+    private String affectedArea;
+    private int confidence;
 
-    private String triageKey;
-    private float triageConfidence;
+    private String guidanceAction;
+    private String guidanceMessage;
+    private String guidanceWarning;
 
-    private String guideMsg;
-    private String guideWarn;
-    private String guideAction;
+    private List<SymptomChecklist> symptoms;
 
-    public static RecentDiagnosisResponse empty() {
+    @Getter
+    @AllArgsConstructor
+    public static class SymptomChecklist {
+        private Long symptomId;
+        private String description;
+        private boolean checked;
+    }
+
+    public static RecentDiagnosisResponse empty(List<SymptomChecklist> symptoms) {
         return new RecentDiagnosisResponse(
                 false,
-                null, null,
-                null, null,
-                null, 0,
-                null, null, null
+                null,
+                null,
+                null,
+                null,
+                0,
+                null,
+                null,
+                null,
+                symptoms
         );
     }
 
-    public static RecentDiagnosisResponse from(Diagnosis d) {
-        return new RecentDiagnosisResponse(
-                true,
-                d.getDiagnosisId(),
-                d.getImageUrl(),
-                d.getDisease().getDiseaseId(),
-                d.getDisease().getDiseaseName(),
-                d.getTriageKey(),
-                d.getTriageConfidence(),
-                d.getGuideMsg(),
-                d.getGuideWarn(),
-                d.getGuideAction()
-        );
-    }
 }
