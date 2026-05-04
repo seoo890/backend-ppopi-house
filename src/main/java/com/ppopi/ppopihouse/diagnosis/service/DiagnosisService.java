@@ -93,17 +93,14 @@ public class DiagnosisService {
         diagnosisRepository.save(diagnosis);
 
         return new DiagnosisResponse(
-                new DiagnosisResponse.Summary(
-                        formatStatus(aiResponse.getTriage()),
-                        formatDiseaseTitle(aiResponse.getDisease(), aiResponse.getFamilyLabel()),
-                        formatConfidence(aiResponse.getTriageConfidence())
-                ),
-                new DiagnosisResponse.ResultCard(
-                        formatDescriptionTitle(aiResponse.getDisease()),
-                        aiResponse.getGuidanceMessage(),
-                        formatGuideTitle(aiResponse.getTriage()),
-                        aiResponse.getGuidanceAction()
-                )
+                imageUrl,
+                formatStatus(aiResponse.getTriage()),
+                diseaseName,
+                formatAffectedArea(aiResponse.getFamilyLabel()),
+                formatConfidence(aiResponse.getTriageConfidence()),
+                aiResponse.getGuidanceAction(),
+                aiResponse.getGuidanceMessage(),
+                aiResponse.getGuidanceWarning()
         );
     }
 
@@ -126,15 +123,18 @@ public class DiagnosisService {
         return Year.now().getValue() - birthYear;
     }
 
-    private String formatGuideTitle(String triage) {
-        if (triage == null) return "진료 권장";
+    private String formatAffectedArea(String familyLabel) {
+        if (familyLabel == null) return null;
 
-        return switch (triage.toLowerCase()) {
-            case "normal" -> "정상 안구입니다";
-            case "soon" -> "일주일 내 내원 권장";
-            case "urgent" -> "24시간 이내 내원 권장";
-            case "emergency" -> "즉시 응급 진료 권장";
-            default -> "진료 권장";
+        return switch (familyLabel) {
+            case "cornea_ulcerative" -> "각막";
+            case "cornea_nonulcerative" -> "각막";
+            case "conjunctiva" -> "결막";
+            case "eyelid" -> "눈꺼풀";
+            case "lens_vitreous" -> "수정체/유리체";
+            case "tear" -> "눈물";
+            case "normal" -> "정상";
+            default -> familyLabel;
         };
     }
 
