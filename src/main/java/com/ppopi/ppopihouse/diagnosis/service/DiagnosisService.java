@@ -73,11 +73,18 @@ public class DiagnosisService {
 
         String diseaseName = normalizeDiseaseName(aiResponse.getDisease());
         String species = normalizeSpecies(pet.getSpecies());
+        String affectedArea = normalizeAffectedArea(aiResponse.getFamilyLabel());
 
         EyeDiseaseCode disease = eyeDiseaseCodeRepository
-                .findByDiseaseNameAndInputSpecies(diseaseName, species)
+                .findByDiseaseNameAndInputSpeciesAndAffectedArea(
+                        diseaseName,
+                        species,
+                        affectedArea
+                )
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "등록되지 않은 질병 코드입니다. disease=" + diseaseName + ", species=" + species
+                        "등록되지 않은 질병 코드입니다. disease=" + diseaseName
+                                + ", species=" + species
+                                + ", affectedArea=" + affectedArea
                 ));
 
         Diagnosis diagnosis = new Diagnosis();
@@ -222,5 +229,13 @@ public class DiagnosisService {
                 .filter(value -> !value.isBlank())
                 .map(Long::valueOf)
                 .toList();
+    }
+
+    private String normalizeAffectedArea(String affectedArea) {
+        if (affectedArea == null || affectedArea.isBlank()) {
+            throw new IllegalArgumentException("AI affectedArea 값이 비어 있습니다.");
+        }
+
+        return affectedArea.trim();
     }
 }
