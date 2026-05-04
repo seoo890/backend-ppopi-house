@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.Year;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,7 +82,7 @@ public class DiagnosisService {
 
         Diagnosis diagnosis = new Diagnosis();
         diagnosis.setPet(pet);
-        diagnosis.setDiagnosisDate(LocalDate.now());
+        diagnosis.setDiagnosisDate(LocalDate.now(ZoneId.of("Asia/Seoul")));
         diagnosis.setImageUrl(imageUrl);
         diagnosis.setDisease(disease);
 

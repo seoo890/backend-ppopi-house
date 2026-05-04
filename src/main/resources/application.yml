@@ -5,6 +5,9 @@ spring:
   application:
     name: ppopihouse
 
+  jackson:
+    time-zone: Asia/Seoul
+
   profiles:
     active: local
 
