@@ -9,7 +9,7 @@ spring:
     time-zone: Asia/Seoul
 
   profiles:
-    active: local
+    active: prod
 
   servlet:
     multipart:
