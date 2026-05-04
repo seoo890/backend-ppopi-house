@@ -1,13 +1,18 @@
 package com.ppopi.ppopihouse.pet.controller;
 
+import com.ppopi.ppopihouse.diary.dto.DiaryDto;
+import com.ppopi.ppopihouse.pet.service.PetService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import com.ppopi.ppopihouse.pet.domain.PetSpecies;
 import com.ppopi.ppopihouse.pet.dto.request.PetCreateRequest;
 import com.ppopi.ppopihouse.pet.service.PetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +24,15 @@ public class PetController {
 
     private final PetService petService;
 
+    /**
+     * 현재 로그인한 회원의 반려동물 목록 조회
+     * GET /pets
+     */
+    @GetMapping
+    public ResponseEntity<List<DiaryDto.PetSummary>> getMyPets(
+            @AuthenticationPrincipal Long memberId) {
+        return ResponseEntity.ok(petService.findPetSummaries(memberId));
+    }
     @Operation(
             summary = "품종 목록 조회",
             description = """

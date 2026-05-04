@@ -7,11 +7,23 @@ import lombok.Getter;
 @AllArgsConstructor
 public class DiagnosisResponse {
 
-    private String diseaseName;
-    private String triage;
-    private float confidence;
-    private String affectedArea;
-    private String description;
-    private String action;
+    private Summary summary;
+    private ResultCard resultCard;
 
+    @Getter
+    @AllArgsConstructor
+    public static class Summary {
+        private String status;
+        private String diseaseName;
+        private int confidence;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ResultCard {
+        private String title;
+        private String description;
+        private String guideTitle;
+        private String guideMessage;
+    }
 }

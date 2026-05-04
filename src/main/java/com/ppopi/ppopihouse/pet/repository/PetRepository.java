@@ -9,7 +9,5 @@ import java.util.List;
 public interface PetRepository extends JpaRepository<Pet, Long> {
 
     boolean existsByMember(Member member);
-
     List<Pet> findAllByMember_MemberId(Long memberId);
-
 }

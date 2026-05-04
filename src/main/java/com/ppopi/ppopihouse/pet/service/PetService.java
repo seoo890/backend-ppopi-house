@@ -1,5 +1,6 @@
 package com.ppopi.ppopihouse.pet.service;
 
+import com.ppopi.ppopihouse.diary.dto.DiaryDto;
 import com.ppopi.ppopihouse.member.domain.Member;
 import com.ppopi.ppopihouse.member.repository.MemberRepository;
 import com.ppopi.ppopihouse.pet.domain.Pet;
@@ -10,8 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,19 @@ public class PetService {
 
     private final PetRepository petRepository;
     private final MemberRepository memberRepository;
+    /**
+     * 반려동물 목록 조회
+     */
+    public List<DiaryDto.PetSummary> findPetSummaries(Long memberId) {
+
+        return petRepository.findAllByMember_MemberId(memberId).stream()
+                .map(pet -> DiaryDto.PetSummary.builder()
+                        .petId(pet.getPetId())
+                        .name(pet.getName())
+                        .color(pet.getColor())
+                        .build())
+                .collect(Collectors.toList());
+    }
 
     public List<String> getBreeds(String species) {
         return PetBreedProvider.getBreeds(species);
