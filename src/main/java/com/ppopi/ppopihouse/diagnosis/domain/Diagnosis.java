@@ -48,4 +48,7 @@ public class Diagnosis {
 
     @Column(name = "guide_action", nullable = false)
     private String guideAction;
+
+    @Column(name = "symptom_ids")
+    private String symptomIds;
 }
