@@ -19,7 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.Year;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -83,6 +85,13 @@ public class DiagnosisService {
         diagnosis.setImageUrl(imageUrl);
         diagnosis.setDisease(disease);
 
+        diagnosis.setSymptomIds(
+                symptomIds == null ? "" :
+                        symptomIds.stream()
+                                .map(String::valueOf)
+                                .collect(Collectors.joining(","))
+        );
+
         diagnosis.setTriageKey(aiResponse.getTriage());
         diagnosis.setTriageConfidence(aiResponse.getTriageConfidence());
 
@@ -105,7 +114,6 @@ public class DiagnosisService {
     }
 
     public RecentDiagnosisResponse getTodayDiagnosis(Long memberId, Long petId, LocalDate date) {
-
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
 
@@ -115,26 +123,31 @@ public class DiagnosisService {
 
         return diagnosisRepository
                 .findTopByPet_PetIdAndDiagnosisDateOrderByDiagnosisIdDesc(petId, date)
-                .map(RecentDiagnosisResponse::from)
-                .orElseGet(RecentDiagnosisResponse::empty);
+                .map(d -> {
+                    List<Long> checkedIds = parseSymptomIds(d.getSymptomIds());
+                    List<RecentDiagnosisResponse.SymptomChecklist> symptoms =
+                            buildSymptomChecklist(checkedIds);
+
+                    return toRecentDiagnosisResponse(d, symptoms);
+                })
+                .orElseGet(() -> RecentDiagnosisResponse.empty(buildSymptomChecklist(List.of())));
     }
 
     private int calculateAge(int birthYear) {
         return Year.now().getValue() - birthYear;
     }
 
-    private String formatAffectedArea(String familyLabel) {
-        if (familyLabel == null) return null;
+    private String formatAffectedArea(String area) {
+        if (area == null) return null;
 
-        return switch (familyLabel) {
-            case "cornea_ulcerative" -> "각막";
-            case "cornea_nonulcerative" -> "각막";
+        return switch (area) {
+            case "cornea_ulcerative", "cornea_nonulcerative" -> "각막";
             case "conjunctiva" -> "결막";
             case "eyelid" -> "눈꺼풀";
             case "lens_vitreous" -> "수정체/유리체";
             case "tear" -> "눈물";
             case "normal" -> "정상";
-            default -> familyLabel;
+            default -> area;
         };
     }
 
@@ -148,22 +161,6 @@ public class DiagnosisService {
             case "emergency" -> "Emergency";
             default -> triage;
         };
-    }
-
-    private String formatDiseaseTitle(String diseaseName, String familyLabel) {
-        if ("정상".equals(diseaseName)) {
-            return "정상";
-        }
-
-        String area = switch (familyLabel) {
-            case "cornea" -> "각막";
-            case "conjunctiva" -> "결막";
-            case "lens" -> "수정체";
-            case "retina" -> "망막";
-            default -> null;
-        };
-
-        return area == null ? diseaseName : diseaseName + " | " + area;
     }
 
     private String normalizeDiseaseName(String diseaseName) {
@@ -193,11 +190,43 @@ public class DiagnosisService {
         return (int) Math.round(confidence * 100);
     }
 
-    private String formatDescriptionTitle(String diseaseName) {
-        if ("정상".equals(diseaseName)) {
-            return "정상 안구입니다";
+    private RecentDiagnosisResponse toRecentDiagnosisResponse(
+            Diagnosis d,
+            List<RecentDiagnosisResponse.SymptomChecklist> symptoms
+    ) {
+        return new RecentDiagnosisResponse(
+                true,
+                d.getImageUrl(),
+                formatStatus(d.getTriageKey()),
+                d.getDisease().getDiseaseName(),
+                formatAffectedArea(d.getDisease().getAffectedArea()),
+                formatConfidence(d.getTriageConfidence()),
+                d.getGuideAction(),
+                d.getGuideMsg(),
+                d.getGuideWarn(),
+                symptoms
+        );
+    }
+
+    private List<RecentDiagnosisResponse.SymptomChecklist> buildSymptomChecklist(List<Long> checkedIds) {
+        return Arrays.stream(EyeSymptom.values())
+                .map(symptom -> new RecentDiagnosisResponse.SymptomChecklist(
+                        symptom.getId(),
+                        symptom.getDescription(),
+                        checkedIds.contains(symptom.getId())
+                ))
+                .toList();
+    }
+
+    private List<Long> parseSymptomIds(String symptomIds) {
+        if (symptomIds == null || symptomIds.isBlank()) {
+            return List.of();
         }
 
-        return diseaseName + "이 의심됩니다";
+        return Arrays.stream(symptomIds.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .map(Long::valueOf)
+                .toList();
     }
 }
