@@ -74,17 +74,43 @@ public class HospitalServiceImpl implements HospitalService {
 
     private String getOperationLabel(String businessHours) {
         try {
-            String[] parts = businessHours.split(" - ");
-            LocalTime open = LocalTime.parse(parts[0]);
-            LocalTime close = LocalTime.parse(parts[1]);
+            if (businessHours == null || businessHours.isBlank()) {
+                return "정보 없음";
+            }
+
+            String[] parts = businessHours.split("\\s*[-~]\\s*");
+            if (parts.length != 2) {
+                return "정보 없음";
+            }
+
+            String openStr = parts[0];
+            String closeRaw = parts[1];
+
+            // 24시간 영업
+            if (openStr.equals("00:00") && closeRaw.equals("24:00")) {
+                return "영업 중";
+            }
+
+            String closeStr = closeRaw.equals("24:00") ? "23:59" : closeRaw;
+
+            LocalTime open = LocalTime.parse(openStr);
+            LocalTime close = LocalTime.parse(closeStr);
 
             LocalTime now = LocalTime.now();
 
-            if (now.isAfter(open) && now.isBefore(close)) {
-                return "영업 중";
+            if (open.isBefore(close)) {
+                // 일반 영업일 때
+                if (!now.isBefore(open) && now.isBefore(close)) {
+                    return "영업 중";
+                }
             } else {
-                return "영업 종료";
+                // 자정 넘김 영업일 때
+                if (!now.isBefore(open) || now.isBefore(close)) {
+                    return "영업 중";
+                }
             }
+
+            return "영업 종료";
         } catch (Exception e) {
             return "정보 없음";
         }
