@@ -101,6 +101,7 @@ public class DiaryService {
                 diagnosis.getGuideAction(),
                 diagnosis.getGuideMsg(),
                 diagnosis.getGuideWarn()
+
         );
     }
 
