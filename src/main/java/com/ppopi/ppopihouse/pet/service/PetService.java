@@ -47,6 +47,11 @@ public class PetService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
 
+        long petCount = petRepository.countByMember_MemberId(memberId);
+        if (petCount >= 3) {
+            throw new IllegalArgumentException("반려동물은 최대 3마리까지 등록할 수 있습니다.");
+        }
+
         Pet pet = new Pet();
         pet.setMember(member);
         pet.setName(request.getName());
