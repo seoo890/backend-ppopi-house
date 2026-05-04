@@ -45,3 +45,6 @@ application-dev.yml
 
 # env
 .env
+
+# Local Test Files
+TestAuthController.java
