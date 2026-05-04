@@ -152,14 +152,8 @@ public class DiagnosisService {
     }
 
     private String formatStatus(String triage) {
-        if (triage == null) return "Unknown";
-
-        return switch (triage.toLowerCase()) {
-            case "normal" -> "Normal";
-            case "soon" -> "Soon";
-            case "urgent" -> "Urgent";
-            default -> triage;
-        };
+        if (triage == null || triage.isBlank()) return "UNKNOWN";
+        return triage.trim().toUpperCase();
     }
 
     private String normalizeDiseaseName(String diseaseName) {
