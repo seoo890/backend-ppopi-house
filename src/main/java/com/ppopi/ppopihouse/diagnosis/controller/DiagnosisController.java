@@ -6,6 +6,7 @@ import com.ppopi.ppopihouse.diagnosis.service.DiagnosisService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -41,10 +42,10 @@ public class DiagnosisController {
             @RequestParam Long petId,
 
             @Parameter(description = "진단에 사용할 반려동물 이미지 파일")
-            @RequestPart("image") MultipartFile image,
+            @RequestParam("image") MultipartFile image,
 
             @Parameter(description = "선택한 증상 ID 목록", example = "1,2,3")
-            @RequestParam List<Long> symptomIds
+            @RequestParam(required = false) List<Long> symptomIds
     ) {
         return diagnosisService.diagnose(petId, image, symptomIds);
     }
