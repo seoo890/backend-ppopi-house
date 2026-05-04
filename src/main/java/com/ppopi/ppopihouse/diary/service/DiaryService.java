@@ -93,12 +93,17 @@ public class DiaryService {
         if (diagnosis == null) return null;
 
         return new DiagnosisResponse(
-                diagnosis.getDisease().getDiseaseName(), // EyeDiseaseCode 엔티티에서 질병명 추출
-                diagnosis.getTriageKey(),               // triage
-                diagnosis.getTriageConfidence(),        // confidence
-                diagnosis.getGuideWarn(),               // affectedArea (병변/경고 구역)
-                diagnosis.getGuideMsg(),                // description (설명/가이드 메시지)
-                diagnosis.getGuideAction()              // action (대응 지침)
+                new DiagnosisResponse.Summary(
+                        diseaseName,
+                        triage,
+                        Math.round(confidence * 100)
+                ),
+                new DiagnosisResponse.ResultCard(
+                        diseaseName + "이 의심됩니다",
+                        description,
+                        "진료 권장",
+                        action
+                )
         );
     }
 
