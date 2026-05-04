@@ -29,7 +29,6 @@ public class RecentDiagnosisResponse {
     public static class SymptomChecklist {
         private Long symptomId;
         private String description;
-        private boolean checked;
     }
 
     public static RecentDiagnosisResponse empty(List<SymptomChecklist> symptoms) {

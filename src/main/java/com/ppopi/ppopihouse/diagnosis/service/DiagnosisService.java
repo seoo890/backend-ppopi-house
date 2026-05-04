@@ -152,15 +152,8 @@ public class DiagnosisService {
     }
 
     private String formatStatus(String triage) {
-        if (triage == null) return "Unknown";
-
-        return switch (triage.toLowerCase()) {
-            case "normal" -> "Normal";
-            case "soon" -> "Soon";
-            case "urgent" -> "Urgent";
-            case "emergency" -> "Emergency";
-            default -> triage;
-        };
+        if (triage == null || triage.isBlank()) return "UNKNOWN";
+        return triage.trim().toUpperCase();
     }
 
     private String normalizeDiseaseName(String diseaseName) {
@@ -210,10 +203,10 @@ public class DiagnosisService {
 
     private List<RecentDiagnosisResponse.SymptomChecklist> buildSymptomChecklist(List<Long> checkedIds) {
         return Arrays.stream(EyeSymptom.values())
+                .filter(symptom -> checkedIds.contains(symptom.getId())) // ✅ 체크된 것만 남김
                 .map(symptom -> new RecentDiagnosisResponse.SymptomChecklist(
                         symptom.getId(),
-                        symptom.getDescription(),
-                        checkedIds.contains(symptom.getId())
+                        symptom.getDescription()
                 ))
                 .toList();
     }

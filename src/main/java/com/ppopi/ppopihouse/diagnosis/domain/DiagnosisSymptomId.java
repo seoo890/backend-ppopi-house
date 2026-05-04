@@ -1,9 +1,7 @@
 package com.ppopi.ppopihouse.diagnosis.domain;
 
 import jakarta.persistence.Embeddable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.io.Serializable;
 
@@ -11,6 +9,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class DiagnosisSymptomId implements Serializable {
 
     private Long diagnosisId;
