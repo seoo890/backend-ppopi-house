@@ -106,6 +106,15 @@ public class DiaryService {
     }
 
     /**
+     * 다이어리 작성을 위한 증상 체크리스트 전체 조회
+     */
+    public List<DiaryDto.CheckCodeResponse> findAllCheckCodes() {
+        return checkCodeRepository.findAll().stream()
+                .map(code -> new DiaryDto.CheckCodeResponse(code.getCheckId(), code.getCheckName()))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 다이어리 생성
      */
     @Transactional

@@ -3,6 +3,7 @@ package com.ppopi.ppopihouse.diary.controller;
 import com.ppopi.ppopihouse.diary.dto.DiaryDto;
 import com.ppopi.ppopihouse.diary.dto.DiaryResponseDto;
 import com.ppopi.ppopihouse.diary.service.DiaryService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal; // 추가
@@ -38,6 +39,12 @@ public class DiaryController {
             @RequestParam int month,
             @RequestParam int day) {
         return ResponseEntity.ok(diaryService.findDailyDiaries(memberId, year, month, day));
+    }
+
+    @Operation(summary = "증상 체크리스트 목록 조회", description = "다이어리 생성 시 필요한 증상 목록을 조회합니다.")
+    @GetMapping("/checks")
+    public ResponseEntity<List<DiaryDto.CheckCodeResponse>> getCheckCodes() {
+        return ResponseEntity.ok(diaryService.findAllCheckCodes());
     }
 
     /**
