@@ -8,10 +8,15 @@ import java.util.List;
 public class DiaryDto {
 
     @Getter @Builder
-    @JsonPropertyOrder({ "petId", "name", "species", "breed", "age", "sex" })
+    @JsonPropertyOrder({ "petId", "name", "species", "breed", "birthYear", "age", "sex", "color" })
     public static class PetSummary {
         private Long petId;
         private String name;
+        private String species;
+        private String breed;
+        private Integer birthYear;
+        private Integer age;      // 프론트엔드 편의를 위한 계산된 나이
+        private String sex;
         private Integer color;
     }
 

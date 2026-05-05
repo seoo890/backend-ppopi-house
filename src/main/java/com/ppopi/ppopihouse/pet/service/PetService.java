@@ -26,11 +26,17 @@ public class PetService {
      * 반려동물 목록 조회
      */
     public List<DiaryDto.PetSummary> findPetSummaries(Long memberId) {
+        int currentYear = LocalDate.now().getYear(); // 2026년 기준
 
         return petRepository.findAllByMember_MemberId(memberId).stream()
                 .map(pet -> DiaryDto.PetSummary.builder()
                         .petId(pet.getPetId())
                         .name(pet.getName())
+                        .species(pet.getSpecies() != null ? pet.getSpecies().toString() : null)
+                        .breed(pet.getBreed())
+                        .birthYear(pet.getBirthYear())
+                        .age(currentYear - pet.getBirthYear())
+                        .sex(pet.getSex() != null ? pet.getSex().toString() : null)
                         .color(pet.getColor())
                         .build())
                 .collect(Collectors.toList());
