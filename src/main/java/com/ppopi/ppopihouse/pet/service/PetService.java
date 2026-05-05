@@ -34,7 +34,6 @@ public class PetService {
                         .name(pet.getName())
                         .species(pet.getSpecies() != null ? pet.getSpecies().toString() : null)
                         .breed(pet.getBreed())
-                        .birthYear(pet.getBirthYear())
                         .age(currentYear - pet.getBirthYear())
                         .sex(pet.getSex() != null ? pet.getSex().toString() : null)
                         .color(pet.getColor())

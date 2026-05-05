@@ -14,7 +14,6 @@ public class DiaryDto {
         private String name;
         private String species;
         private String breed;
-        private Integer birthYear;
         private Integer age;      // 프론트엔드 편의를 위한 계산된 나이
         private String sex;
         private Integer color;
