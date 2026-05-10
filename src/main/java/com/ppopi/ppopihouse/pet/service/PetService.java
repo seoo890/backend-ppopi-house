@@ -5,6 +5,7 @@ import com.ppopi.ppopihouse.member.domain.Member;
 import com.ppopi.ppopihouse.member.repository.MemberRepository;
 import com.ppopi.ppopihouse.pet.domain.Pet;
 import com.ppopi.ppopihouse.pet.dto.request.PetCreateRequest;
+import com.ppopi.ppopihouse.pet.dto.request.PetUpdateRequest;
 import com.ppopi.ppopihouse.pet.dto.response.PetCreateResponse;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,63 @@ public class PetService {
                         .color(pet.getColor())
                         .build())
                 .collect(Collectors.toList());
+    }
+    /**
+     * 수정에서 사용할 유효성 검사
+     */
+    private void validatePetRequest(String name, String species, String breed, int age, String sex) {
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("반려동물 이름은 필수입니다.");
+        if (species == null || species.isBlank()) throw new IllegalArgumentException("반려동물 종은 필수입니다.");
+        if (breed == null || breed.isBlank()) throw new IllegalArgumentException("품종은 필수입니다.");
+        if (age < 0 || age > 30) throw new IllegalArgumentException("올바르지 않은 나이입니다.");
+        if (sex == null || sex.isBlank()) throw new IllegalArgumentException("성별은 필수입니다.");
+    }
+
+    /**
+     * 반려동물 정보 수정
+     */
+    @Transactional
+    public void updatePet(Long memberId, Long petId, PetUpdateRequest request) {
+        // 1. 유효성 검사 (기존 create 로직과 동일한 기준 적용)
+        validatePetRequest(request.getName(), request.getSpecies(), request.getBreed(), request.getAge(), request.getSex());
+
+        // 2. 존재 여부 및 소유권 검증
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
+
+        if (!pet.getMember().getMemberId().equals(memberId)) {
+            throw new SecurityException("해당 반려동물에 대한 수정 권한이 없습니다.");
+        }
+
+        // 3. 정보 갱신
+        pet.setName(request.getName());
+        pet.setSpecies(request.getSpecies());
+        pet.setBreed(request.getBreed());
+        pet.setBirthYear(calculateBirthYear(request.getAge()));
+        pet.setSex(request.getSex());
+        pet.setColor(request.getColor());
+
+    }
+    /**
+     * 반려동물 삭제
+     */
+    @Transactional
+    public void deletePet(Long memberId, Long petId) {
+        Pet pet = findValidatedPet(memberId, petId);
+        petRepository.delete(pet);
+    }
+
+    /**
+     * 반려동물 존재 여부 및 소유권 검증 공통 로직
+     */
+    private Pet findValidatedPet(Long memberId, Long petId) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
+
+        if (!pet.getMember().getMemberId().equals(memberId)) {
+            throw new SecurityException("해당 반려동물에 대한 접근 권한이 없습니다.");
+        }
+        return pet;
     }
 
     public List<String> getBreeds(String species) {

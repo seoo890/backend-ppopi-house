@@ -1,6 +1,7 @@
 package com.ppopi.ppopihouse.pet.controller;
 
 import com.ppopi.ppopihouse.diary.dto.DiaryDto;
+import com.ppopi.ppopihouse.pet.dto.request.PetUpdateRequest;
 import com.ppopi.ppopihouse.pet.service.PetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,32 @@ public class PetController {
             @AuthenticationPrincipal Long memberId) {
         return ResponseEntity.ok(petService.findPetSummaries(memberId));
     }
+
+    @Operation(summary = "반려동물 정보 수정", description = "기존 등록된 반려동물의 정보를 수정합니다.")
+    @PutMapping("/{petId}")
+    public ResponseEntity<String> updatePet(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable Long petId,
+            @RequestBody PetUpdateRequest request) {
+
+        petService.updatePet(memberId, petId, request);
+        return ResponseEntity.ok("success");
+    }
+
+    /**
+     * 반려동물 정보 삭제
+     * DELETE /pets/{petId}
+     */
+    @Operation(summary = "반려동물 정보 삭제", description = "등록된 반려동물 정보를 삭제합니다.")
+    @DeleteMapping("/{petId}")
+    public ResponseEntity<String> deletePet(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable Long petId) {
+
+        petService.deletePet(memberId, petId);
+        return ResponseEntity.ok("success");
+    }
+
     @Operation(
             summary = "품종 목록 조회",
             description = """
