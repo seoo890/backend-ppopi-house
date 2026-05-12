@@ -7,8 +7,9 @@ import java.util.Optional;
 
 public interface EyeDiseaseCodeRepository extends JpaRepository<EyeDiseaseCode, Long> {
 
-    Optional<EyeDiseaseCode> findByDiseaseNameAndInputSpecies(
+    Optional<EyeDiseaseCode> findByDiseaseNameAndInputSpeciesAndAffectedArea(
             String diseaseName,
-            String inputSpecies
+            String inputSpecies,
+            String affectedArea
     );
 }

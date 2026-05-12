@@ -10,6 +10,8 @@ import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.dto.response.RecentDiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.repository.DiagnosisRepository;
 import com.ppopi.ppopihouse.diagnosis.repository.EyeDiseaseCodeRepository;
+import com.ppopi.ppopihouse.diary.domain.DiaryEntry;
+import com.ppopi.ppopihouse.diary.repository.DiaryRepository;
 import com.ppopi.ppopihouse.global.infra.cloud.ImageStorageService;
 import com.ppopi.ppopihouse.pet.domain.Pet;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.Year;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +32,7 @@ public class DiagnosisService {
 
     private final PetRepository petRepository;
     private final DiagnosisRepository diagnosisRepository;
+    private final DiaryRepository diaryRepository;
     private final EyeDiseaseCodeRepository eyeDiseaseCodeRepository;
     private final ImageValidationClient imageValidationClient;
     private final ImageStorageService imageStorageService;
@@ -72,16 +76,23 @@ public class DiagnosisService {
 
         String diseaseName = normalizeDiseaseName(aiResponse.getDisease());
         String species = normalizeSpecies(pet.getSpecies());
+        String affectedArea = normalizeAffectedArea(aiResponse.getFamilyLabel());
 
         EyeDiseaseCode disease = eyeDiseaseCodeRepository
-                .findByDiseaseNameAndInputSpecies(diseaseName, species)
+                .findByDiseaseNameAndInputSpeciesAndAffectedArea(
+                        diseaseName,
+                        species,
+                        affectedArea
+                )
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "등록되지 않은 질병 코드입니다. disease=" + diseaseName + ", species=" + species
+                        "등록되지 않은 질병 코드입니다. disease=" + diseaseName
+                                + ", species=" + species
+                                + ", affectedArea=" + affectedArea
                 ));
 
         Diagnosis diagnosis = new Diagnosis();
         diagnosis.setPet(pet);
-        diagnosis.setDiagnosisDate(LocalDate.now());
+        diagnosis.setDiagnosisDate(LocalDate.now(ZoneId.of("Asia/Seoul")));
         diagnosis.setImageUrl(imageUrl);
         diagnosis.setDisease(disease);
 
@@ -99,7 +110,15 @@ public class DiagnosisService {
         diagnosis.setGuideAction(aiResponse.getGuidanceAction());
         diagnosis.setGuideWarn(aiResponse.getGuidanceWarning());
 
-        diagnosisRepository.save(diagnosis);
+        Diagnosis savedDiagnosis = diagnosisRepository.save(diagnosis);
+
+        DiaryEntry diaryEntry = new DiaryEntry();
+        diaryEntry.setPet(pet);
+        diaryEntry.setDiagnosis(savedDiagnosis);
+        diaryEntry.setEntryDate(LocalDate.now(ZoneId.of("Asia/Seoul")));
+        diaryEntry.setMemo(null);
+
+        diaryRepository.save(diaryEntry);
 
         return new DiagnosisResponse(
                 imageUrl,
@@ -221,5 +240,13 @@ public class DiagnosisService {
                 .filter(value -> !value.isBlank())
                 .map(Long::valueOf)
                 .toList();
+    }
+
+    private String normalizeAffectedArea(String affectedArea) {
+        if (affectedArea == null || affectedArea.isBlank()) {
+            throw new IllegalArgumentException("AI affectedArea 값이 비어 있습니다.");
+        }
+
+        return affectedArea.trim();
     }
 }
