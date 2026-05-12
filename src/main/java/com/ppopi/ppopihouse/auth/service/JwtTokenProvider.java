@@ -1,6 +1,8 @@
 package com.ppopi.ppopihouse.auth.service;
 
 import com.ppopi.ppopihouse.auth.config.JwtProperties;
+import com.ppopi.ppopihouse.global.exception.UnauthorizedException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -40,21 +42,36 @@ public class JwtTokenProvider {
     }
 
     public Long getMemberId(String token) {
-        return Long.valueOf(
-                Jwts.parser()
-                        .verifyWith(getKey())
-                        .build()
-                        .parseSignedClaims(token)
-                        .getPayload()
-                        .getSubject()
-        );
+        try {
+            return Long.valueOf(
+                    Jwts.parser()
+                            .verifyWith(getKey())
+                            .build()
+                            .parseSignedClaims(token)
+                            .getPayload()
+                            .getSubject()
+            );
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new UnauthorizedException("유효하지 않은 토큰입니다.");
+        }
+    }
+
+    public void validateOrThrow(String token) {
+        try {
+            Jwts.parser()
+                    .verifyWith(getKey())
+                    .build()
+                    .parseSignedClaims(token);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new UnauthorizedException("유효하지 않거나 만료된 토큰입니다.");
+        }
     }
 
     public boolean validate(String token) {
         try {
-            Jwts.parser().verifyWith(getKey()).build().parseSignedClaims(token);
+            validateOrThrow(token);
             return true;
-        } catch (Exception e) {
+        } catch (UnauthorizedException e) {
             return false;
         }
     }

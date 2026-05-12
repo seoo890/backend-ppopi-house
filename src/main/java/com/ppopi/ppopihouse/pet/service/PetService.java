@@ -9,10 +9,12 @@ import com.ppopi.ppopihouse.pet.dto.request.PetUpdateRequest;
 import com.ppopi.ppopihouse.pet.dto.response.PetCreateResponse;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.time.LocalDate;
 
@@ -23,6 +25,7 @@ public class PetService {
 
     private final PetRepository petRepository;
     private final MemberRepository memberRepository;
+
     /**
      * 반려동물 목록 조회
      */
@@ -41,16 +44,6 @@ public class PetService {
                         .build())
                 .collect(Collectors.toList());
     }
-    /**
-     * 수정에서 사용할 유효성 검사
-     */
-    private void validatePetRequest(String name, String species, String breed, int age, String sex) {
-        if (name == null || name.isBlank()) throw new IllegalArgumentException("반려동물 이름은 필수입니다.");
-        if (species == null || species.isBlank()) throw new IllegalArgumentException("반려동물 종은 필수입니다.");
-        if (breed == null || breed.isBlank()) throw new IllegalArgumentException("품종은 필수입니다.");
-        if (age < 0 || age > 30) throw new IllegalArgumentException("올바르지 않은 나이입니다.");
-        if (sex == null || sex.isBlank()) throw new IllegalArgumentException("성별은 필수입니다.");
-    }
 
     /**
      * 반려동물 정보 수정
@@ -61,12 +54,7 @@ public class PetService {
         validatePetRequest(request.getName(), request.getSpecies(), request.getBreed(), request.getAge(), request.getSex());
 
         // 2. 존재 여부 및 소유권 검증
-        Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
-
-        if (!pet.getMember().getMemberId().equals(memberId)) {
-            throw new SecurityException("해당 반려동물에 대한 수정 권한이 없습니다.");
-        }
+        Pet pet = findValidatedPet(memberId, petId);
 
         // 3. 정보 갱신
         pet.setName(request.getName());
@@ -86,18 +74,6 @@ public class PetService {
         petRepository.delete(pet);
     }
 
-    /**
-     * 반려동물 존재 여부 및 소유권 검증 공통 로직
-     */
-    private Pet findValidatedPet(Long memberId, Long petId) {
-        Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
-
-        if (!pet.getMember().getMemberId().equals(memberId)) {
-            throw new SecurityException("해당 반려동물에 대한 접근 권한이 없습니다.");
-        }
-        return pet;
-    }
 
     public List<String> getBreeds(String species) {
         return PetBreedProvider.getBreeds(species);
@@ -105,10 +81,10 @@ public class PetService {
 
     @Transactional
     public PetCreateResponse createPet(Long memberId, PetCreateRequest request) {
-        validatePetCreateRequest(request);
+        validatePetRequest(request.getName(), request.getSpecies(), request.getBreed(), request.getAge(), request.getSex());
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 회원입니다."));
 
         long petCount = petRepository.countByMember_MemberId(memberId);
         if (petCount >= 3) {
@@ -129,29 +105,32 @@ public class PetService {
         return new PetCreateResponse(savedPet.getPetId());
     }
 
-    private int calculateBirthYear(int age) {
-        return LocalDate.now().getYear() - age;
+    /**
+     * 반려동물 존재 여부 및 소유권 검증 공통 로직
+     */
+    private Pet findValidatedPet(Long memberId, Long petId) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 반려동물입니다."));
+
+        if (!pet.getMember().getMemberId().equals(memberId)) {
+            throw new AccessDeniedException("해당 반려동물에 대한 접근 권한이 없습니다.");
+        }
+
+        return pet;
     }
 
-    private void validatePetCreateRequest(PetCreateRequest request) {
-        if (request.getName() == null || request.getName().isBlank()) {
-            throw new IllegalArgumentException("반려동물 이름은 필수입니다.");
-        }
+    /**
+     * 수정에서 사용할 유효성 검사
+     */
+    private void validatePetRequest(String name, String species, String breed, int age, String sex) {
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("반려동물 이름은 필수입니다.");
+        if (species == null || species.isBlank()) throw new IllegalArgumentException("반려동물 종은 필수입니다.");
+        if (breed == null || breed.isBlank()) throw new IllegalArgumentException("품종은 필수입니다.");
+        if (age < 0 || age > 30) throw new IllegalArgumentException("올바르지 않은 나이입니다.");
+        if (sex == null || sex.isBlank()) throw new IllegalArgumentException("성별은 필수입니다.");
+    }
 
-        if (request.getSpecies() == null || request.getSpecies().isBlank()) {
-            throw new IllegalArgumentException("반려동물 종은 필수입니다.");
-        }
-
-        if (request.getBreed() == null || request.getBreed().isBlank()) {
-            throw new IllegalArgumentException("품종은 필수입니다.");
-        }
-
-        if (request.getAge() < 0 || request.getAge() > 30) {
-            throw new IllegalArgumentException("올바르지 않은 나이입니다.");
-        }
-
-        if (request.getSex() == null || request.getSex().isBlank()) {
-            throw new IllegalArgumentException("성별은 필수입니다.");
-        }
+    private int calculateBirthYear(int age) {
+        return LocalDate.now().getYear() - age;
     }
 }

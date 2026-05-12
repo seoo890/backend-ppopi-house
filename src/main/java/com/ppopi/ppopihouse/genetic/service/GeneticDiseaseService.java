@@ -21,10 +21,6 @@ public class GeneticDiseaseService {
     public List<GeneticDiseaseResponse> getRandomDiseases() {
         List<GeneticDisease> diseases = geneticDiseaseRepository.findAll();
 
-        if (diseases.isEmpty()) {
-            return null;
-        }
-
         Collections.shuffle(diseases);
 
         return diseases.stream()
@@ -34,12 +30,16 @@ public class GeneticDiseaseService {
     }
 
     public List<GeneticDiseaseResponse> searchDiseases(String keyword) {
-        List<GeneticDisease> diseases =
-                geneticDiseaseRepository.searchByKeyword(keyword, PageRequest.of(0, 3));
 
-        if (diseases.isEmpty()) {
-            return null;
+        if (keyword == null || keyword.isBlank()) {
+            throw new IllegalArgumentException("검색어는 필수입니다.");
         }
+
+        List<GeneticDisease> diseases =
+                geneticDiseaseRepository.searchByKeyword(
+                        keyword,
+                        PageRequest.of(0, 3)
+                );
 
         return diseases.stream()
                 .map(GeneticDiseaseResponse::from)

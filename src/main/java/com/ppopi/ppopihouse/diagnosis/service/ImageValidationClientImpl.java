@@ -1,7 +1,7 @@
 package com.ppopi.ppopihouse.diagnosis.service;
 
 import com.ppopi.ppopihouse.diagnosis.dto.external.ImageValidationResponse;
-import com.ppopi.ppopihouse.diagnosis.service.ImageValidationClient;
+import com.ppopi.ppopihouse.global.exception.ExternalApiException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -11,6 +11,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
 
 import java.io.IOException;
 
@@ -35,7 +36,7 @@ public class ImageValidationClientImpl implements ImageValidationClient {
             LinkedMultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("file", imageResource);
 
-            return webClientBuilder.build()
+            ImageValidationResponse response = webClientBuilder.build()
                     .post()
                     .uri(validationApiBaseUrl + "/validate/eye-image")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -44,8 +45,15 @@ public class ImageValidationClientImpl implements ImageValidationClient {
                     .bodyToMono(ImageValidationResponse.class)
                     .block();
 
+            if (response == null) {
+                throw new ExternalApiException("이미지 유효성 검사 서버 응답이 비어 있습니다.");
+            }
+
+            return response;
         } catch (IOException e) {
-            throw new RuntimeException("이미지 파일을 읽는 중 오류가 발생했습니다.");
+            throw new IllegalArgumentException("이미지 파일을 읽는 중 오류가 발생했습니다.");
+        } catch (WebClientException e) {
+            throw new ExternalApiException("이미지 유효성 검사 서버 호출 중 오류가 발생했습니다.");
         }
     }
 }
