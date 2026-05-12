@@ -18,7 +18,6 @@ public class DiaryDto {
     @Getter @Setter
     public static class CreateRequest {
         private Long petId;
-        private Long diagnosisId; // 진단 기반 자동 생성 시 전달받을 ID (선택 사항)
         private String memo;
         private List<Long> checkIds;
     }
