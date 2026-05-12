@@ -43,4 +43,15 @@ public class DiaryDto {
         private String memo;
         private List<Long> checkIds;
     }
+    @Getter
+    @Setter
+    @Builder // 빌더 패턴 사용 가능
+    @NoArgsConstructor  // 인자 없는 기본 생성자 생성
+    @AllArgsConstructor // 모든 필드를 인자로 받는 생성자 생성
+    public static class CheckCodeResponse {
+
+        private Long checkId;
+        private String checkName;
+
+    }
 }
