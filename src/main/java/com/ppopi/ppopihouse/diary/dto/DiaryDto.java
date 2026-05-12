@@ -8,10 +8,14 @@ import java.util.List;
 public class DiaryDto {
 
     @Getter @Builder
-    @JsonPropertyOrder({ "petId", "name", "species", "breed", "age", "sex" })
+    @JsonPropertyOrder({ "petId", "name", "species", "breed", "birthYear", "age", "sex", "color" })
     public static class PetSummary {
         private Long petId;
         private String name;
+        private String species;
+        private String breed;
+        private Integer age;      // 프론트엔드 편의를 위한 계산된 나이
+        private String sex;
         private Integer color;
     }
 
@@ -38,5 +42,16 @@ public class DiaryDto {
         private LocalDate entryDate;
         private String memo;
         private List<Long> checkIds;
+    }
+    @Getter
+    @Setter
+    @Builder // 빌더 패턴 사용 가능
+    @NoArgsConstructor  // 인자 없는 기본 생성자 생성
+    @AllArgsConstructor // 모든 필드를 인자로 받는 생성자 생성
+    public static class CheckCodeResponse {
+
+        private Long checkId;
+        private String checkName;
+
     }
 }
