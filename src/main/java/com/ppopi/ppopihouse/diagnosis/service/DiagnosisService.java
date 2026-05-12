@@ -10,6 +10,8 @@ import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.dto.response.RecentDiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.repository.DiagnosisRepository;
 import com.ppopi.ppopihouse.diagnosis.repository.EyeDiseaseCodeRepository;
+import com.ppopi.ppopihouse.diary.domain.DiaryEntry;
+import com.ppopi.ppopihouse.diary.repository.DiaryRepository;
 import com.ppopi.ppopihouse.global.infra.cloud.ImageStorageService;
 import com.ppopi.ppopihouse.pet.domain.Pet;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
@@ -30,6 +32,7 @@ public class DiagnosisService {
 
     private final PetRepository petRepository;
     private final DiagnosisRepository diagnosisRepository;
+    private final DiaryRepository diaryRepository;
     private final EyeDiseaseCodeRepository eyeDiseaseCodeRepository;
     private final ImageValidationClient imageValidationClient;
     private final ImageStorageService imageStorageService;
@@ -107,7 +110,15 @@ public class DiagnosisService {
         diagnosis.setGuideAction(aiResponse.getGuidanceAction());
         diagnosis.setGuideWarn(aiResponse.getGuidanceWarning());
 
-        diagnosisRepository.save(diagnosis);
+        Diagnosis savedDiagnosis = diagnosisRepository.save(diagnosis);
+
+        DiaryEntry diaryEntry = new DiaryEntry();
+        diaryEntry.setPet(pet);
+        diaryEntry.setDiagnosis(savedDiagnosis);
+        diaryEntry.setEntryDate(LocalDate.now(ZoneId.of("Asia/Seoul")));
+        diaryEntry.setMemo(null);
+
+        diaryRepository.save(diaryEntry);
 
         return new DiagnosisResponse(
                 imageUrl,
