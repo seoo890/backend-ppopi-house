@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "member")
 @Getter
@@ -19,4 +21,14 @@ public class Member {
 
     @Column(name = "kakao_user_id", nullable = false, unique = true)
     private String kakaoUserId;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+
+    public void withdraw(LocalDateTime deletedAt) {
+        this.deleted = true;
+        this.deletedAt = deletedAt;
+    }
 }
