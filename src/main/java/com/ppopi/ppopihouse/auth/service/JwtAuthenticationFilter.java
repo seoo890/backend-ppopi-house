@@ -1,10 +1,14 @@
 package com.ppopi.ppopihouse.auth.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ppopi.ppopihouse.global.exception.ErrorResponse;
+import com.ppopi.ppopihouse.global.exception.UnauthorizedException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -18,6 +22,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -27,10 +32,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
+        try {
+            if (header != null && header.startsWith("Bearer ")) {
+                String token = header.substring(7);
 
-            if (jwtTokenProvider.validate(token)) {
+                jwtTokenProvider.validateOrThrow(token);
+
                 Long memberId = jwtTokenProvider.getMemberId(token);
 
                 UsernamePasswordAuthenticationToken auth =
@@ -38,8 +45,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
-        }
 
-        filterChain.doFilter(request, response);
+            filterChain.doFilter(request, response);
+
+        } catch (UnauthorizedException e) {
+            SecurityContextHolder.clearContext();
+
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+
+            objectMapper.writeValue(
+                    response.getWriter(),
+                    new ErrorResponse("UNAUTHORIZED", e.getMessage())
+            );
+        }
     }
 }

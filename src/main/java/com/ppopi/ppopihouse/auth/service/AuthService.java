@@ -5,6 +5,7 @@ import com.ppopi.ppopihouse.auth.dto.response.KakaoUserResponse;
 import com.ppopi.ppopihouse.auth.dto.response.LoginResponse;
 import com.ppopi.ppopihouse.auth.dto.response.TokenResponse;
 import com.ppopi.ppopihouse.auth.repository.RefreshTokenRepository;
+import com.ppopi.ppopihouse.global.exception.UnauthorizedException;
 import com.ppopi.ppopihouse.member.domain.Member;
 import com.ppopi.ppopihouse.member.repository.MemberRepository;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
@@ -58,16 +59,14 @@ public class AuthService {
 
     public TokenResponse reissue(String refreshToken) {
 
-        if (!jwtTokenProvider.validate(refreshToken)) {
-            throw new RuntimeException("invalid refresh token");
-        }
+        jwtTokenProvider.validateOrThrow(refreshToken);
 
         Long memberId = jwtTokenProvider.getMemberId(refreshToken);
 
         String savedToken = refreshTokenRepository.find(memberId);
 
         if (savedToken == null || !savedToken.equals(refreshToken)) {
-            throw new RuntimeException("refresh token mismatch");
+            throw new UnauthorizedException("refresh token이 일치하지 않습니다.");
         }
 
         String newAccessToken = jwtTokenProvider.createAccessToken(memberId);

@@ -10,12 +10,14 @@ import com.ppopi.ppopihouse.diary.repository.*;
 import com.ppopi.ppopihouse.pet.domain.Pet;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -121,10 +123,10 @@ public class DiaryService {
     public void saveDiary(Long memberId, DiaryDto.CreateRequest request) {
         // 1. 반려동물 존재 및 권한 검증
         Pet pet = petRepository.findById(request.getPetId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 반려동물입니다."));
 
         if (!pet.getMember().getMemberId().equals(memberId)) {
-            throw new SecurityException("해당 반려동물에 대한 접근 권한이 없습니다.");
+            throw new AccessDeniedException("해당 반려동물에 대한 접근 권한이 없습니다.");
         }
 
         // 3. 다이어리 엔티티 생성 및 저장
@@ -135,6 +137,7 @@ public class DiaryService {
         entry.setMemo(request.getMemo());
 
         diaryRepository.save(entry);
+
 
         // 4. 체크리스트 항목 저장
         if (request.getCheckIds() != null && !request.getCheckIds().isEmpty()) {
@@ -148,11 +151,11 @@ public class DiaryService {
     @Transactional
     public void updateDiary(Long memberId, Long diaryId, DiaryDto.UpdateRequest request) {
         DiaryEntry entry = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 기록을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException("해당 기록을 찾을 수 없습니다."));
 
-        // 소유권 검증: 다이어리의 주인이 현재 사용자 인지 확인
+        // 소유권 검증
         if (!entry.getPet().getMember().getMemberId().equals(memberId)) {
-            throw new SecurityException("수정 권한이 없습니다.");
+            throw new AccessDeniedException("수정 권한이 없습니다.");
         }
 
         entry.setMemo(request.getMemo());
@@ -168,10 +171,10 @@ public class DiaryService {
     @Transactional
     public void deleteDiary(Long memberId, Long diaryId) {
         DiaryEntry entry = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 기록을 찾을 수 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException("해당 기록을 찾을 수 없습니다."));
 
         if (!entry.getPet().getMember().getMemberId().equals(memberId)) {
-            throw new SecurityException("삭제 권한이 없습니다.");
+            throw new AccessDeniedException("삭제 권한이 없습니다.");
         }
 
         entryCheckRepository.deleteByDiaryEntry(entry);
@@ -183,7 +186,9 @@ public class DiaryService {
     private void saveAllChecks(DiaryEntry entry, List<Long> checkIds) {
         List<DiaryEntryCheck> checks = checkIds.stream().map(checkId -> {
             DiaryCheckCode code = checkCodeRepository.findById(checkId)
-                    .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 체크 항목 ID: " + checkId));
+                    .orElseThrow(() ->
+                            new NoSuchElementException("유효하지 않은 체크 항목 ID: " + checkId)
+                    );
 
             DiaryEntryCheckId id = new DiaryEntryCheckId();
             id.setDiaryId(entry.getDiaryId());

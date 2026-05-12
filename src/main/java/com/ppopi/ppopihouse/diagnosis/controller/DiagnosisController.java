@@ -45,9 +45,11 @@ public class DiagnosisController {
             @RequestParam("image") MultipartFile image,
 
             @Parameter(description = "선택한 증상 ID 목록", example = "1,2,3")
-            @RequestParam(required = false) List<Long> symptomIds
+            @RequestParam(required = false) List<Long> symptomIds,
+
+            @AuthenticationPrincipal Long memberId
     ) {
-        return diagnosisService.diagnose(petId, image, symptomIds);
+        return diagnosisService.diagnose(memberId, petId, image, symptomIds);
     }
 
     @Operation(
