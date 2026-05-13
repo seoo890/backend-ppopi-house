@@ -7,6 +7,8 @@ import com.ppopi.ppopihouse.auth.dto.response.TokenResponse;
 import com.ppopi.ppopihouse.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -39,7 +41,43 @@ public class AuthController {
                     """
     )
     @PostMapping("/reissue")
-    public TokenResponse reissue(@RequestBody RefreshTokenRequest request) {
+    public TokenResponse reissue(
+            @RequestBody RefreshTokenRequest request
+    ) {
         return authService.reissue(request.getRefreshToken());
+    }
+
+    @Operation(
+            summary = "로그아웃",
+            description = """
+                현재 로그인한 회원의 refreshToken을 삭제하여 로그아웃 처리합니다.
+                
+                accessToken은 stateless 방식이므로 서버에서 직접 만료시키지 않고,
+                Redis에 저장된 refreshToken을 삭제하여 토큰 재발급을 차단합니다.
+                """
+    )
+    @DeleteMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        authService.logout(memberId);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "회원탈퇴",
+            description = """
+                현재 로그인한 회원을 탈퇴 처리합니다.
+                
+                회원 데이터는 즉시 물리 삭제하지 않고 soft delete 방식으로 처리합니다.
+                탈퇴 시 Redis에 저장된 refreshToken을 삭제하여 재로그인 및 토큰 재발급을 차단합니다.
+                """
+    )
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<Void> withdraw(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        authService.withdraw(memberId);
+        return ResponseEntity.ok().build();
     }
 }

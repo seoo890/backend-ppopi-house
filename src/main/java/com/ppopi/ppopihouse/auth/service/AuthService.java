@@ -11,10 +11,18 @@ import com.ppopi.ppopihouse.member.repository.MemberRepository;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.NoSuchElementException;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
 
     private final KakaoClient kakaoClient;
     private final MemberRepository memberRepository;
@@ -29,25 +37,17 @@ public class AuthService {
         String kakaoUserId = String.valueOf(kakaoUser.getId());
 
         Member member = memberRepository.findByKakaoUserId(kakaoUserId)
-                .orElseGet(() -> {
-                    Member newMember = new Member();
-                    newMember.setKakaoUserId(kakaoUserId);
-                    return memberRepository.save(newMember);
-                });
+                .orElseGet(() -> createMember(kakaoUserId));
+
+        validateActiveMember(member);
 
         boolean hasPet = petRepository.existsByMember(member);
         boolean isOnboarding = !hasPet;
 
-        // ✅ 토큰 생성
         String accessToken = jwtTokenProvider.createAccessToken(member.getMemberId());
         String refreshToken = jwtTokenProvider.createRefreshToken(member.getMemberId());
 
-        // ✅ Redis 저장
-        refreshTokenRepository.save(
-                member.getMemberId(),
-                refreshToken,
-                jwtProperties.getRefreshExpiration()
-        );
+        saveRefreshToken(member.getMemberId(), refreshToken);
 
         return new LoginResponse(
                 member.getMemberId(),
@@ -58,10 +58,12 @@ public class AuthService {
     }
 
     public TokenResponse reissue(String refreshToken) {
-
         jwtTokenProvider.validateOrThrow(refreshToken);
 
         Long memberId = jwtTokenProvider.getMemberId(refreshToken);
+
+        Member member = findMember(memberId);
+        validateActiveMemberForReissue(member);
 
         String savedToken = refreshTokenRepository.find(memberId);
 
@@ -72,11 +74,7 @@ public class AuthService {
         String newAccessToken = jwtTokenProvider.createAccessToken(memberId);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId);
 
-        refreshTokenRepository.save(
-                memberId,
-                newRefreshToken,
-                jwtProperties.getRefreshExpiration()
-        );
+        saveRefreshToken(memberId, newRefreshToken);
 
         return new TokenResponse(newAccessToken, newRefreshToken);
     }
@@ -85,4 +83,48 @@ public class AuthService {
         refreshTokenRepository.delete(memberId);
     }
 
+    @Transactional
+    public void withdraw(Long memberId) {
+        Member member = findMember(memberId);
+
+        if (member.isDeleted()) {
+            refreshTokenRepository.delete(memberId);
+            return;
+        }
+
+        refreshTokenRepository.delete(memberId);
+        member.withdraw(LocalDateTime.now(SEOUL_ZONE));
+    }
+
+    private Member createMember(String kakaoUserId) {
+        Member member = new Member();
+        member.setKakaoUserId(kakaoUserId);
+        return memberRepository.save(member);
+    }
+
+    private Member findMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 회원입니다."));
+    }
+
+    private void validateActiveMember(Member member) {
+        if (member.isDeleted()) {
+            throw new UnauthorizedException("탈퇴한 회원입니다.");
+        }
+    }
+
+    private void validateActiveMemberForReissue(Member member) {
+        if (member.isDeleted()) {
+            refreshTokenRepository.delete(member.getMemberId());
+            throw new UnauthorizedException("탈퇴한 회원입니다.");
+        }
+    }
+
+    private void saveRefreshToken(Long memberId, String refreshToken) {
+        refreshTokenRepository.save(
+                memberId,
+                refreshToken,
+                jwtProperties.getRefreshExpiration()
+        );
+    }
 }
