@@ -1,24 +1,24 @@
 package com.ppopi.ppopihouse.global.exception;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Getter
-@AllArgsConstructor
 public class ErrorResponse {
 
-    private final OffsetDateTime timestamp;
+    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
 
-    private String code;
-    private String message;
+    private final String timestamp;
+    private final String code;
+    private final String message;
 
     public ErrorResponse(String code, String message) {
+        this.timestamp = OffsetDateTime.now(SEOUL_ZONE)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         this.code = code;
         this.message = message;
-        this.timestamp = OffsetDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 }

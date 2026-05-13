@@ -8,13 +8,16 @@ import com.ppopi.ppopihouse.auth.repository.RefreshTokenRepository;
 import com.ppopi.ppopihouse.global.exception.UnauthorizedException;
 import com.ppopi.ppopihouse.member.domain.Member;
 import com.ppopi.ppopihouse.member.repository.MemberRepository;
+import com.ppopi.ppopihouse.pet.domain.Pet;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -37,11 +40,15 @@ public class AuthService {
         String kakaoUserId = String.valueOf(kakaoUser.getId());
 
         Member member = memberRepository.findByKakaoUserId(kakaoUserId)
+                .map(existingMember -> {
+                    if (existingMember.isDeleted()) {
+                        existingMember.rejoin();
+                    }
+                    return existingMember;
+                })
                 .orElseGet(() -> createMember(kakaoUserId));
 
-        validateActiveMember(member);
-
-        boolean hasPet = petRepository.existsByMember(member);
+        boolean hasPet = petRepository.existsByMemberAndDeletedFalse(member);
         boolean isOnboarding = !hasPet;
 
         String accessToken = jwtTokenProvider.createAccessToken(member.getMemberId());
@@ -80,20 +87,32 @@ public class AuthService {
     }
 
     public void logout(Long memberId) {
+        System.out.println("logout memberId = " + memberId);
+
         refreshTokenRepository.delete(memberId);
+
+        String savedToken = refreshTokenRepository.find(memberId);
+        System.out.println("logout 후 refreshToken = " + savedToken);
     }
 
     @Transactional
     public void withdraw(Long memberId) {
         Member member = findMember(memberId);
 
+        refreshTokenRepository.delete(memberId);
+
         if (member.isDeleted()) {
-            refreshTokenRepository.delete(memberId);
             return;
         }
 
-        refreshTokenRepository.delete(memberId);
-        member.withdraw(LocalDateTime.now(SEOUL_ZONE));
+        List<Pet> pets = petRepository.findAllByMemberAndDeletedFalse(member);
+        LocalDateTime now = LocalDateTime.now(SEOUL_ZONE);
+
+        for (Pet pet : pets) {
+            pet.delete(now);
+        }
+
+        member.withdraw(now);
     }
 
     private Member createMember(String kakaoUserId) {

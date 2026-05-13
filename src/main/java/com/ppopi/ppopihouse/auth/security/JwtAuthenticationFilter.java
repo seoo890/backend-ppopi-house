@@ -1,6 +1,7 @@
-package com.ppopi.ppopihouse.auth.service;
+package com.ppopi.ppopihouse.auth.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ppopi.ppopihouse.auth.service.JwtTokenProvider;
 import com.ppopi.ppopihouse.global.exception.ErrorResponse;
 import com.ppopi.ppopihouse.global.exception.UnauthorizedException;
 import jakarta.servlet.FilterChain;
@@ -40,8 +41,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 Long memberId = jwtTokenProvider.getMemberId(token);
 
+                CustomUserDetails userDetails = new CustomUserDetails(memberId);
+
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(memberId, null, List.of());
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
@@ -60,5 +67,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new ErrorResponse("UNAUTHORIZED", e.getMessage())
             );
         }
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        return path.equals("/auth/kakao")
+                || path.equals("/auth/reissue")
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/v3/api-docs/")
+                || path.equals("/swagger-ui.html");
     }
 }

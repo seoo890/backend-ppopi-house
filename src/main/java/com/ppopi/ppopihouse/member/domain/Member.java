@@ -31,4 +31,9 @@ public class Member {
         this.deleted = true;
         this.deletedAt = deletedAt;
     }
+
+    public void rejoin() {
+        this.deleted = false;
+        this.deletedAt = null;
+    }
 }
