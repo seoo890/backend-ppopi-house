@@ -12,4 +12,9 @@ public interface EyeDiseaseCodeRepository extends JpaRepository<EyeDiseaseCode, 
             String inputSpecies,
             String affectedArea
     );
+
+    Optional<EyeDiseaseCode> findByDiseaseNameAndInputSpecies(
+            String diseaseName,
+            String inputSpecies
+    );
 }
