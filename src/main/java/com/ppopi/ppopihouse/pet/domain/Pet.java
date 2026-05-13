@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "pet")
 @Getter
@@ -39,4 +41,19 @@ public class Pet {
 
     @Column(nullable = false)
     private int color;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+
+    public void delete(LocalDateTime deletedAt) {
+        this.deleted = true;
+        this.deletedAt = deletedAt;
+    }
+
+    public void restore() {
+        this.deleted = false;
+        this.deletedAt = null;
+    }
 }

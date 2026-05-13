@@ -4,10 +4,12 @@ import com.ppopi.ppopihouse.auth.dto.request.KakaoLoginRequest;
 import com.ppopi.ppopihouse.auth.dto.request.RefreshTokenRequest;
 import com.ppopi.ppopihouse.auth.dto.response.LoginResponse;
 import com.ppopi.ppopihouse.auth.dto.response.TokenResponse;
+import com.ppopi.ppopihouse.auth.security.CustomUserDetails;
 import com.ppopi.ppopihouse.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,9 +60,10 @@ public class AuthController {
     )
     @DeleteMapping("/logout")
     public ResponseEntity<Void> logout(
-            @AuthenticationPrincipal Long memberId
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        authService.logout(memberId);
+        authService.logout(userDetails.getMemberId());
+
         return ResponseEntity.ok().build();
     }
 
@@ -75,9 +78,9 @@ public class AuthController {
     )
     @DeleteMapping("/withdraw")
     public ResponseEntity<Void> withdraw(
-            @AuthenticationPrincipal Long memberId
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        authService.withdraw(memberId);
+        authService.withdraw(userDetails.getMemberId());
         return ResponseEntity.ok().build();
     }
 }
