@@ -1,5 +1,6 @@
 package com.ppopi.ppopihouse.pet.controller;
 
+import com.ppopi.ppopihouse.auth.security.CustomUserDetails;
 import com.ppopi.ppopihouse.diary.dto.DiaryDto;
 import com.ppopi.ppopihouse.pet.dto.request.PetUpdateRequest;
 import com.ppopi.ppopihouse.pet.service.PetService;
@@ -31,18 +32,19 @@ public class PetController {
      */
     @GetMapping
     public ResponseEntity<List<DiaryDto.PetSummary>> getMyPets(
-            @AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(petService.findPetSummaries(memberId));
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(petService.findPetSummaries(userDetails.getMemberId()));
     }
 
     @Operation(summary = "반려동물 정보 수정", description = "기존 등록된 반려동물의 정보를 수정합니다.")
     @PutMapping("/{petId}")
     public ResponseEntity<String> updatePet(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long petId,
             @RequestBody PetUpdateRequest request) {
 
-        petService.updatePet(memberId, petId, request);
+        petService.updatePet(userDetails.getMemberId(), petId, request);
         return ResponseEntity.ok("success");
     }
 
@@ -53,10 +55,10 @@ public class PetController {
     @Operation(summary = "반려동물 정보 삭제", description = "등록된 반려동물 정보를 삭제합니다.")
     @DeleteMapping("/{petId}")
     public ResponseEntity<String> deletePet(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long petId) {
 
-        petService.deletePet(memberId, petId);
+        petService.deletePet(userDetails.getMemberId(), petId);
         return ResponseEntity.ok("success");
     }
 
@@ -91,11 +93,10 @@ public class PetController {
     @PostMapping
     public ResponseEntity<String> createPet(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal Long memberId,
-
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody PetCreateRequest request
     ) {
-        petService.createPet(memberId, request);
+        petService.createPet(userDetails.getMemberId(), request);
         return ResponseEntity.ok("ok");
     }
 }

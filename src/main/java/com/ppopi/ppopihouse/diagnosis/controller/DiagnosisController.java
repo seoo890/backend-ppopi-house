@@ -1,5 +1,6 @@
 package com.ppopi.ppopihouse.diagnosis.controller;
 
+import com.ppopi.ppopihouse.auth.security.CustomUserDetails;
 import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.dto.response.RecentDiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.service.DiagnosisService;
@@ -47,9 +48,9 @@ public class DiagnosisController {
             @Parameter(description = "선택한 증상 ID 목록", example = "1,2,3")
             @RequestParam(required = false) List<Long> symptomIds,
 
-            @AuthenticationPrincipal Long memberId
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return diagnosisService.diagnose(memberId, petId, image, symptomIds);
+        return diagnosisService.diagnose(userDetails.getMemberId(), petId, image, symptomIds);
     }
 
     @Operation(
@@ -64,7 +65,7 @@ public class DiagnosisController {
     @GetMapping("/today")
     public RecentDiagnosisResponse getTodayDiagnosis(
             @Parameter(hidden = true)
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
 
             @Parameter(description = "조회할 반려동물 ID", example = "1")
             @RequestParam Long petId,
@@ -72,6 +73,6 @@ public class DiagnosisController {
             @Parameter(description = "조회할 날짜", example = "2026-05-04")
             @RequestParam LocalDate date
     ) {
-        return diagnosisService.getTodayDiagnosis(memberId, petId, date);
+        return diagnosisService.getTodayDiagnosis(userDetails.getMemberId(), petId, date);
     }
 }

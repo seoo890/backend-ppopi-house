@@ -1,5 +1,6 @@
 package com.ppopi.ppopihouse.diary.controller;
 
+import com.ppopi.ppopihouse.auth.security.CustomUserDetails;
 import com.ppopi.ppopihouse.diary.dto.DiaryDto;
 import com.ppopi.ppopihouse.diary.dto.DiaryResponseDto;
 import com.ppopi.ppopihouse.diary.service.DiaryService;
@@ -23,10 +24,10 @@ public class DiaryController {
      */
     @GetMapping("/month")
     public ResponseEntity<DiaryResponseDto.MonthlyResponse> getMonthlyDiaries(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam int year,
             @RequestParam int month) {
-        return ResponseEntity.ok(diaryService.findMonthlyRecords(memberId, year, month));
+        return ResponseEntity.ok(diaryService.findMonthlyRecords(userDetails.getMemberId(), year, month));
     }
 
     /**
@@ -34,11 +35,11 @@ public class DiaryController {
      */
     @GetMapping
     public ResponseEntity<List<DiaryResponseDto.DayDetailResponse>> getDailyDiaries(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam int year,
             @RequestParam int month,
             @RequestParam int day) {
-        return ResponseEntity.ok(diaryService.findDailyDiaries(memberId, year, month, day));
+        return ResponseEntity.ok(diaryService.findDailyDiaries(userDetails.getMemberId(), year, month, day));
     }
 
     @Operation(summary = "증상 체크리스트 목록 조회", description = "다이어리 생성 시 필요한 증상 목록을 조회합니다.")
@@ -52,9 +53,9 @@ public class DiaryController {
      */
     @PostMapping
     public ResponseEntity<Void> createDiary(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody DiaryDto.CreateRequest request) {
-        diaryService.saveDiary(memberId, request);
+        diaryService.saveDiary(userDetails.getMemberId(), request);
         return ResponseEntity.ok().build();
     }
 
@@ -63,11 +64,11 @@ public class DiaryController {
      */
     @PutMapping("/{diaryId}")
     public ResponseEntity<Void> updateDiary(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long diaryId,
             @RequestBody DiaryDto.UpdateRequest request) {
 
-        diaryService.updateDiary(memberId, diaryId, request);
+        diaryService.updateDiary(userDetails.getMemberId(), diaryId, request);
         return ResponseEntity.ok().build();
     }
 
@@ -76,12 +77,9 @@ public class DiaryController {
      */
     @DeleteMapping("/{diaryId}")
     public ResponseEntity<Void> deleteDiary(
-            @AuthenticationPrincipal Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long diaryId) {
-        diaryService.deleteDiary(memberId, diaryId);
+        diaryService.deleteDiary(userDetails.getMemberId(), diaryId);
         return ResponseEntity.ok().build();
     }
-
-
-
 }
