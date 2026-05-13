@@ -9,8 +9,6 @@ import com.ppopi.ppopihouse.diary.dto.DiaryResponseDto;
 import com.ppopi.ppopihouse.diary.repository.*;
 import com.ppopi.ppopihouse.pet.domain.Pet;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
-import com.ppopi.ppopihouse.diagnosis.domain.EyeSymptom; // Enum 임포트
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -110,14 +108,11 @@ public class DiaryService {
     }
 
     /**
-     * 다이어리 작성을 위한 증상 체크리스트 전체 조회 (Enum 기반)
+     * 다이어리 작성을 위한 증상 체크리스트 전체 조회
      */
     public List<DiaryDto.CheckCodeResponse> findAllCheckCodes() {
-        return Arrays.stream(EyeSymptom.values())
-                .map(symptom -> DiaryDto.CheckCodeResponse.builder()
-                        .checkId(symptom.getId())
-                        .checkName(symptom.getDescription())
-                        .build())
+        return checkCodeRepository.findAll().stream()
+                .map(code -> new DiaryDto.CheckCodeResponse(code.getCheckId(), code.getCheckName()))
                 .collect(Collectors.toList());
     }
 
