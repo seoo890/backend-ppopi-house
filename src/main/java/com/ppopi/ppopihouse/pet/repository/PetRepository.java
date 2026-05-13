@@ -8,10 +8,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PetRepository extends JpaRepository<Pet, Long> {
+    long countByMember_MemberIdAndDeletedFalse(Long memberId);
 
-    long countByMember_MemberId(Long memberId);
     List<Pet> findAllByMember_MemberId(Long memberId);
+
     boolean existsByMemberAndDeletedFalse(Member member);
+
+    List<Pet> findAllByMemberAndDeletedFalseOrderByPetIdAsc(Member member);
+
     List<Pet> findAllByMember_MemberIdAndDeletedFalseOrderByPetIdAsc(Long memberId);
-    Optional<Pet> findByPetIdAndMember_MemberIdAndDeletedFalse(Long petId, Long memberId);
+
+    Optional<Pet> findByPetIdAndMember_MemberIdAndDeletedFalse(
+            Long petId,
+            Long memberId
+    );
 }
