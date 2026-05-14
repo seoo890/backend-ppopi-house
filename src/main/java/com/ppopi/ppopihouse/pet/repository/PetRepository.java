@@ -10,8 +10,6 @@ import java.util.Optional;
 public interface PetRepository extends JpaRepository<Pet, Long> {
     long countByMember_MemberIdAndDeletedFalse(Long memberId);
 
-    List<Pet> findAllByMember_MemberId(Long memberId);
-
     boolean existsByMemberAndDeletedFalse(Member member);
 
     List<Pet> findAllByMemberAndDeletedFalseOrderByPetIdAsc(Member member);
