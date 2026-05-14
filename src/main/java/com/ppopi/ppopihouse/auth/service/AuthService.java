@@ -11,7 +11,6 @@ import com.ppopi.ppopihouse.member.repository.MemberRepository;
 import com.ppopi.ppopihouse.pet.domain.Pet;
 import com.ppopi.ppopihouse.pet.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,7 +104,7 @@ public class AuthService {
             return;
         }
 
-        List<Pet> pets = petRepository.findAllByMemberAndDeletedFalse(member);
+        List<Pet> pets = petRepository.findAllByMemberAndDeletedFalseOrderByPetIdAsc(member);
         LocalDateTime now = LocalDateTime.now(SEOUL_ZONE);
 
         for (Pet pet : pets) {

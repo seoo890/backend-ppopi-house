@@ -153,7 +153,20 @@ public class DiagnosisService {
     private EyeDiseaseCode findDiseaseCode(Pet pet, AiDiagnosisResponse aiResponse) {
         String diseaseName = normalizeDiseaseName(aiResponse.getDisease());
         String species = normalizeSpecies(pet.getSpecies());
-        String affectedArea = normalizeAffectedArea(aiResponse.getFamilyLabel());
+
+        if ("정상".equals(diseaseName)) {
+            return eyeDiseaseCodeRepository
+                    .findByDiseaseNameAndInputSpecies(
+                            diseaseName,
+                            species
+                    )
+                    .orElseThrow(() -> new NoSuchElementException(
+                            "등록되지 않은 정상 질병 코드입니다."
+                    ));
+        }
+
+        String affectedArea =
+                normalizeAffectedArea(aiResponse.getFamilyLabel(), diseaseName);
 
         return eyeDiseaseCodeRepository
                 .findByDiseaseNameAndInputSpeciesAndAffectedArea(
@@ -162,9 +175,7 @@ public class DiagnosisService {
                         affectedArea
                 )
                 .orElseThrow(() -> new NoSuchElementException(
-                        "등록되지 않은 질병 코드입니다. disease=" + diseaseName
-                                + ", species=" + species
-                                + ", affectedArea=" + affectedArea
+                        "등록되지 않은 질병 코드입니다."
                 ));
     }
 
@@ -191,11 +202,19 @@ public class DiagnosisService {
     }
 
     private void createDiaryFromDiagnosis(Pet pet, Diagnosis diagnosis) {
-        DiaryEntry diaryEntry = new DiaryEntry();
-        diaryEntry.setPet(pet);
+        LocalDate today = LocalDate.now(SEOUL_ZONE);
+
+        DiaryEntry diaryEntry = diaryRepository
+                .findByPet_PetIdAndEntryDate(pet.getPetId(), today)
+                .orElseGet(() -> {
+                    DiaryEntry newDiaryEntry = new DiaryEntry();
+                    newDiaryEntry.setPet(pet);
+                    newDiaryEntry.setEntryDate(today);
+                    newDiaryEntry.setMemo(null);
+                    return newDiaryEntry;
+                });
+
         diaryEntry.setDiagnosis(diagnosis);
-        diaryEntry.setEntryDate(LocalDate.now(SEOUL_ZONE));
-        diaryEntry.setMemo(null);
 
         diaryRepository.save(diaryEntry);
     }
@@ -273,8 +292,14 @@ public class DiagnosisService {
         };
     }
 
-    private String normalizeAffectedArea(String affectedArea) {
+    private String normalizeAffectedArea(String affectedArea, String diseaseName) {
+        boolean isNormal = "정상".equals(diseaseName);
+
         if (affectedArea == null || affectedArea.isBlank()) {
+            if (isNormal) {
+                return null;
+            }
+
             throw new IllegalArgumentException("AI affectedArea 값이 비어 있습니다.");
         }
 

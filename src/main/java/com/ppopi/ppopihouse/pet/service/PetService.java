@@ -13,6 +13,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -32,7 +34,8 @@ public class PetService {
     public List<DiaryDto.PetSummary> findPetSummaries(Long memberId) {
         int currentYear = LocalDate.now().getYear(); // 2026년 기준
 
-        return petRepository.findAllByMember_MemberId(memberId).stream()
+        return petRepository
+                .findAllByMember_MemberIdAndDeletedFalseOrderByPetIdAsc(memberId).stream()
                 .map(pet -> DiaryDto.PetSummary.builder()
                         .petId(pet.getPetId())
                         .name(pet.getName())
@@ -71,9 +74,8 @@ public class PetService {
     @Transactional
     public void deletePet(Long memberId, Long petId) {
         Pet pet = findValidatedPet(memberId, petId);
-        petRepository.delete(pet);
+        pet.delete(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
     }
-
 
     public List<String> getBreeds(String species) {
         return PetBreedProvider.getBreeds(species);
@@ -86,7 +88,7 @@ public class PetService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 회원입니다."));
 
-        long petCount = petRepository.countByMember_MemberId(memberId);
+        long petCount = petRepository.countByMember_MemberIdAndDeletedFalse(memberId);
         if (petCount >= 3) {
             throw new IllegalArgumentException("반려동물은 최대 3마리까지 등록할 수 있습니다.");
         }
@@ -109,14 +111,8 @@ public class PetService {
      * 반려동물 존재 여부 및 소유권 검증 공통 로직
      */
     private Pet findValidatedPet(Long memberId, Long petId) {
-        Pet pet = petRepository.findById(petId)
+        return petRepository.findByPetIdAndMember_MemberIdAndDeletedFalse(petId, memberId)
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 반려동물입니다."));
-
-        if (!pet.getMember().getMemberId().equals(memberId)) {
-            throw new AccessDeniedException("해당 반려동물에 대한 접근 권한이 없습니다.");
-        }
-
-        return pet;
     }
 
     /**
