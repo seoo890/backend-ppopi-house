@@ -33,4 +33,8 @@ public class DiaryEntry {
     private LocalDate entryDate;
 
     private String memo;
+
+    public void updateDiagnosis(Diagnosis diagnosis) {
+        this.diagnosis = diagnosis;
+    }
 }
