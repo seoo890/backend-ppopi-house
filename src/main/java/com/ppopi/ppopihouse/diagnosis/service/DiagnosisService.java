@@ -202,11 +202,19 @@ public class DiagnosisService {
     }
 
     private void createDiaryFromDiagnosis(Pet pet, Diagnosis diagnosis) {
-        DiaryEntry diaryEntry = new DiaryEntry();
-        diaryEntry.setPet(pet);
+        LocalDate today = LocalDate.now(SEOUL_ZONE);
+
+        DiaryEntry diaryEntry = diaryRepository
+                .findByPet_PetIdAndEntryDate(pet.getPetId(), today)
+                .orElseGet(() -> {
+                    DiaryEntry newDiaryEntry = new DiaryEntry();
+                    newDiaryEntry.setPet(pet);
+                    newDiaryEntry.setEntryDate(today);
+                    newDiaryEntry.setMemo(null);
+                    return newDiaryEntry;
+                });
+
         diaryEntry.setDiagnosis(diagnosis);
-        diaryEntry.setEntryDate(LocalDate.now(SEOUL_ZONE));
-        diaryEntry.setMemo(null);
 
         diaryRepository.save(diaryEntry);
     }

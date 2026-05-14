@@ -3,6 +3,10 @@ package com.ppopi.ppopihouse.global.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -12,6 +16,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.NoSuchElementException;
 
@@ -102,6 +108,22 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("UNAUTHORIZED", e.getMessage()));
     }
 
+    // 401: 인증 정보 없음 / 인증 실패
+    @ExceptionHandler({
+            AuthenticationException.class,
+            AuthenticationCredentialsNotFoundException.class
+    })
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+            Exception e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        "UNAUTHORIZED",
+                        "인증 정보가 없거나 유효하지 않습니다."
+                ));
+    }
+
     // 403: 인증은 됐지만 권한 없음
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(
@@ -122,6 +144,22 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("NOT_FOUND", e.getMessage()));
     }
 
+    // 404: 존재하지 않는 URL
+    @ExceptionHandler({
+            NoHandlerFoundException.class,
+            NoResourceFoundException.class
+    })
+    public ResponseEntity<ErrorResponse> handleNotFoundException(
+            Exception e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(
+                        "NOT_FOUND",
+                        "요청한 URL을 찾을 수 없습니다."
+                ));
+    }
+
     // 405: 지원하지 않는 HTTP Method
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(
@@ -135,6 +173,19 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // 406: 응답 가능한 Content-Type 없음
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotAcceptableException(
+            HttpMediaTypeNotAcceptableException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_ACCEPTABLE)
+                .body(new ErrorResponse(
+                        "NOT_ACCEPTABLE",
+                        "요청한 응답 형식을 제공할 수 없습니다."
+                ));
+    }
+
     // 413: 업로드 파일 크기 초과
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(
@@ -145,6 +196,19 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(
                         "PAYLOAD_TOO_LARGE",
                         "업로드 가능한 파일 크기를 초과했습니다."
+                ));
+    }
+
+    // 415: 지원하지 않는 Content-Type
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
+            HttpMediaTypeNotSupportedException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(new ErrorResponse(
+                        "UNSUPPORTED_MEDIA_TYPE",
+                        "지원하지 않는 요청 형식입니다."
                 ));
     }
 

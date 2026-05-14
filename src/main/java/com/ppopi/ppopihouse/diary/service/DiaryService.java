@@ -35,7 +35,7 @@ public class DiaryService {
      * 월별 다이어리 기록 조회
      */
     public DiaryResponseDto.MonthlyResponse findMonthlyRecords(Long memberId, int year, int month) {
-        List<Pet> myPets = petRepository.findAllByMember_MemberId(memberId);
+        List<Pet> myPets = petRepository.findAllByMember_MemberIdAndDeletedFalseOrderByPetIdAsc(memberId);
 
         LocalDate start = YearMonth.of(year, month).atDay(1);
         LocalDate end = YearMonth.of(year, month).atEndOfMonth();
@@ -66,7 +66,7 @@ public class DiaryService {
      */
     public List<DiaryResponseDto.DayDetailResponse> findDailyDiaries(Long memberId, int year, int month, int day) {
         LocalDate targetDate = LocalDate.of(year, month, day);
-        List<Pet> myPets = petRepository.findAllByMember_MemberId(memberId);
+        List<Pet> myPets = petRepository.findAllByMember_MemberIdAndDeletedFalseOrderByPetIdAsc(memberId);
         List<DiaryEntry> entries = diaryRepository.findAllByPetInAndEntryDate(myPets, targetDate);
 
         return entries.stream().map(entry -> {
