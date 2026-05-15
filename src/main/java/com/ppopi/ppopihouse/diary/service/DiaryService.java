@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -38,7 +39,6 @@ public class DiaryService {
      */
     public DiaryResponseDto.MonthlyResponse findMonthlyRecords(Long memberId, int year, int month) {
         List<Pet> myPets = petRepository.findAllByMember_MemberIdAndDeletedFalseOrderByPetIdAsc(memberId);
-
         LocalDate start = YearMonth.of(year, month).atDay(1);
         LocalDate end = YearMonth.of(year, month).atEndOfMonth();
 
@@ -64,7 +64,7 @@ public class DiaryService {
     }
 
     /**
-     * 일별 다이어리 상세 조회
+     * 일별 다이어리 상세 조회 (목록용)
      */
     public List<DiaryResponseDto.DayDetailResponse> findDailyDiaries(Long memberId, int year, int month, int day) {
         LocalDate targetDate = LocalDate.of(year, month, day);
@@ -73,8 +73,6 @@ public class DiaryService {
 
         return entries.stream().map(entry -> {
             List<DiaryEntryCheck> checks = entryCheckRepository.findAllByDiaryEntry(entry);
-
-            // [피드백 반영] Diagnosis 엔티티를 DiagnosisResponse DTO로 변환
             DiagnosisResponse diagnosisResponse = convertToDiagnosisResponse(entry.getDiagnosis());
 
             return DiaryResponseDto.DayDetailResponse.builder()
@@ -83,7 +81,7 @@ public class DiaryService {
                     .petName(entry.getPet().getName())
                     .entryDate(entry.getEntryDate())
                     .memo(entry.getMemo())
-                    .diagnosis(diagnosisResponse) // 엔티티 대신 DTO 주입
+                    .diagnosis(diagnosisResponse)
                     .checkIds(checks.stream().map(c -> c.getCheckCode().getCheckId()).collect(Collectors.toList()))
                     .checkNames(checks.stream().map(c -> c.getCheckCode().getCheckName()).collect(Collectors.toList()))
                     .build();
@@ -91,22 +89,55 @@ public class DiaryService {
     }
 
     /**
-     * 엔티티를 DTO로 변환하는 private 헬퍼 메서드
+     * 특정 다이어리 상세 조회 (단일용)
      */
-    private DiagnosisResponse convertToDiagnosisResponse(Diagnosis diagnosis) {
-        if (diagnosis == null) return null;
+    @Transactional(readOnly = true)
+    public DiaryDto.DiaryDetailResponse getDiaryDetail(Long memberId, Long diaryId) {
+        DiaryEntry entry = diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 다이어리입니다."));
 
-        return new DiagnosisResponse(
-                diagnosis.getImageUrl(),
-                formatStatus(diagnosis.getTriageKey()),
-                diagnosis.getDisease().getDiseaseName(),
-                formatAffectedArea(diagnosis.getDisease().getAffectedArea()),
-                formatConfidence(diagnosis.getTriageConfidence()),
-                diagnosis.getGuideAction(),
-                diagnosis.getGuideMsg(),
-                diagnosis.getGuideWarn()
+        if (!entry.getPet().getMember().getMemberId().equals(memberId)) {
+            throw new SecurityException("접근 권한이 없습니다.");
+        }
 
+        // 진단 증상 파싱 로직 적용
+        List<DiaryDto.SymptomResponse> symptomResponses = parseSymptomIds(
+                entry.getDiagnosis() != null ? entry.getDiagnosis().getSymptomIds() : null
         );
+
+        return DiaryDto.DiaryDetailResponse.builder()
+                .diaryId(entry.getDiaryId())
+                .entryDate(entry.getEntryDate())
+                .memo(entry.getMemo())
+                .petId(entry.getPet().getPetId())
+                .petName(entry.getPet().getName())
+                .diagnosisSymptoms(symptomResponses)
+                .diagnosisResult(entry.getDiagnosis() != null ? entry.getDiagnosis().getGuideMsg() : null)
+                .build();
+    }
+
+    /**
+     * [핵심] symptom_ids ("1,3")를 List<SymptomResponse>로 변환하는 헬퍼 메서드
+     */
+    private List<DiaryDto.SymptomResponse> parseSymptomIds(String rawSymptomIds) {
+        if (rawSymptomIds == null || rawSymptomIds.isBlank()) {
+            return new ArrayList<>();
+        }
+
+        String cleanedIds = rawSymptomIds.replace("\"", "").trim();
+        return Arrays.stream(cleanedIds.split(","))
+                .map(String::trim)
+                .filter(idStr -> !idStr.isEmpty())
+                .map(idStr -> {
+                    try {
+                        EyeSymptom symptom = EyeSymptom.fromId(Long.parseLong(idStr));
+                        return new DiaryDto.SymptomResponse(symptom.getId(), symptom.getDescription());
+                    } catch (Exception e) {
+                        return null;
+                    }
+                })
+                .filter(s -> s != null)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -121,12 +152,8 @@ public class DiaryService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 다이어리 생성
-     */
     @Transactional
     public void saveDiary(Long memberId, DiaryDto.CreateRequest request) {
-        // 1. 반려동물 존재 및 권한 검증
         Pet pet = petRepository.findById(request.getPetId())
                 .orElseThrow(() -> new NoSuchElementException("존재하지 않는 반려동물입니다."));
 
@@ -134,45 +161,33 @@ public class DiaryService {
             throw new AccessDeniedException("해당 반려동물에 대한 접근 권한이 없습니다.");
         }
 
-        // 3. 다이어리 엔티티 생성 및 저장
         DiaryEntry entry = new DiaryEntry();
         entry.setPet(pet);
-        entry.setDiagnosis(null);   // 직접 작성 다이어리는 진단 x
-        entry.setEntryDate(LocalDate.now()); // 서버 현재 날짜 적용
+        entry.setEntryDate(LocalDate.now());
         entry.setMemo(request.getMemo());
-
         diaryRepository.save(entry);
 
-
-        // 4. 체크리스트 항목 저장
         if (request.getCheckIds() != null && !request.getCheckIds().isEmpty()) {
             saveAllChecks(entry, request.getCheckIds());
         }
     }
 
-    /**
-     * 다이어리 수정
-     */
     @Transactional
     public void updateDiary(Long memberId, Long diaryId, DiaryDto.UpdateRequest request) {
         DiaryEntry entry = diaryRepository.findById(diaryId)
                 .orElseThrow(() -> new NoSuchElementException("해당 기록을 찾을 수 없습니다."));
 
-        // 소유권 검증
         if (!entry.getPet().getMember().getMemberId().equals(memberId)) {
             throw new AccessDeniedException("수정 권한이 없습니다.");
         }
 
         entry.setMemo(request.getMemo());
-
         entryCheckRepository.deleteByDiaryEntry(entry);
         if (request.getCheckIds() != null) {
             saveAllChecks(entry, request.getCheckIds());
         }
     }
 
-    /**
-     * 다이어리 삭제*/
     @Transactional
     public void deleteDiary(Long memberId, Long diaryId) {
         DiaryEntry entry = diaryRepository.findById(diaryId)
@@ -186,14 +201,10 @@ public class DiaryService {
         diaryRepository.delete(entry);
     }
 
-
-
     private void saveAllChecks(DiaryEntry entry, List<Long> checkIds) {
         List<DiaryEntryCheck> checks = checkIds.stream().map(checkId -> {
             DiaryCheckCode code = checkCodeRepository.findById(checkId)
-                    .orElseThrow(() ->
-                            new NoSuchElementException("유효하지 않은 체크 항목 ID: " + checkId)
-                    );
+                    .orElseThrow(() -> new NoSuchElementException("유효하지 않은 체크 항목 ID: " + checkId));
 
             DiaryEntryCheckId id = new DiaryEntryCheckId();
             id.setDiaryId(entry.getDiaryId());
@@ -209,6 +220,29 @@ public class DiaryService {
         entryCheckRepository.saveAll(checks);
     }
 
+    /**
+     * 엔티티를 DTO로 변환 (증상 리스트 포함 버전)
+     */
+    private DiagnosisResponse convertToDiagnosisResponse(Diagnosis diagnosis) {
+        if (diagnosis == null) return null;
+
+        // 1. DB의 "1,3" 문자열을 파싱하여 List<SymptomResponse>로 변환
+        List<DiaryDto.SymptomResponse> parsedSymptoms = parseSymptomIds(diagnosis.getSymptomIds());
+
+        // 2. 수정된 DiagnosisResponse 생성자에 맞게 인자 전달
+        return new DiagnosisResponse(
+                diagnosis.getImageUrl(),
+                formatStatus(diagnosis.getTriageKey()),
+                diagnosis.getDisease().getDiseaseName(),
+                formatAffectedArea(diagnosis.getDisease().getAffectedArea()),
+                formatConfidence(diagnosis.getTriageConfidence()),
+                diagnosis.getGuideAction(),
+                diagnosis.getGuideMsg(),
+                diagnosis.getGuideWarn(),
+                parsedSymptoms // [추가된 인자]
+        );
+    }
+
     private String formatStatus(String triage) {
         if (triage == null || triage.isBlank()) return "UNKNOWN";
         return triage.trim().toUpperCase();
@@ -216,7 +250,6 @@ public class DiaryService {
 
     private String formatAffectedArea(String area) {
         if (area == null) return null;
-
         return switch (area) {
             case "cornea_ulcerative", "cornea_nonulcerative" -> "각막";
             case "conjunctiva" -> "결막";
