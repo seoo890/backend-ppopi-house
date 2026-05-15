@@ -1,14 +1,15 @@
 package com.ppopi.ppopihouse.hospital.dto.response;
 
-import com.ppopi.ppopihouse.hospital.domain.Hospital;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import com.ppopi.ppopihouse.hospital.external.google.GooglePlaceResponse;
 
 @Getter
 @AllArgsConstructor
 public class HospitalDetailResponse {
 
-    private Long hospitalId;
+    private String hospitalId;
     private String name;
     private String address;
     private String callNumber;
@@ -18,18 +19,24 @@ public class HospitalDetailResponse {
     private long distanceMeter;
 
     public static HospitalDetailResponse from(
-            Hospital hospital,
+            GooglePlaceResponse.GooglePlace place,
             long distanceMeter,
-            String operationLabel
+            String businessHours,
+            String operationLabel,
+            boolean is24hr
     ) {
+        String callNumber = place.nationalPhoneNumber() != null
+                ? place.nationalPhoneNumber()
+                : place.internationalPhoneNumber();
+
         return new HospitalDetailResponse(
-                hospital.getHospitalId(),
-                hospital.getName(),
-                hospital.getAddress(),
-                hospital.getCallNumber(),
-                hospital.getBusinessHours(),
+                place.id(),
+                place.displayName() != null ? place.displayName().text() : "이름 없음",
+                place.formattedAddress(),
+                callNumber,
+                businessHours,
                 operationLabel,
-                hospital.is24hr(),
+                is24hr,
                 distanceMeter
         );
     }

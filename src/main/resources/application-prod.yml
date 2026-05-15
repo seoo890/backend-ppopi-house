@@ -38,3 +38,13 @@ jwt:
   secret: ${JWT_SECRET}
   access-expiration: 3600000
   refresh-expiration: 1209600000
+
+google:
+  places:
+    api-key: ${GOOGLE_PLACES_API_KEY}
+    base-url: https://places.googleapis.com/v1
+
+kakao:
+  local:
+    rest-api-key: ${KAKAO_API_KEY}
+    base-url: https://dapi.kakao.com
