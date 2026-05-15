@@ -1,6 +1,7 @@
 package com.ppopi.ppopihouse.hospital.dto.response;
 
-import com.ppopi.ppopihouse.hospital.domain.Hospital;
+import com.ppopi.ppopihouse.hospital.external.google.GooglePlaceResponse;
+import com.ppopi.ppopihouse.hospital.external.kakao.KakaoPlaceResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -8,7 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class HospitalDetailResponse {
 
-    private Long hospitalId;
+    private String hospitalId;
     private String name;
     private String address;
     private String callNumber;
@@ -18,18 +19,39 @@ public class HospitalDetailResponse {
     private long distanceMeter;
 
     public static HospitalDetailResponse from(
-            Hospital hospital,
-            long distanceMeter,
-            String operationLabel
+            KakaoPlaceResponse.Document kakaoPlace,
+            GooglePlaceResponse.GooglePlace googlePlace,
+            String businessHours,
+            String operationLabel,
+            boolean is24hr,
+            long distanceMeter
     ) {
+        String address = kakaoPlace.road_address_name() != null && !kakaoPlace.road_address_name().isBlank()
+                ? kakaoPlace.road_address_name()
+                : kakaoPlace.address_name();
+
+        if ((address == null || address.isBlank()) && googlePlace != null) {
+            address = googlePlace.formattedAddress();
+        }
+
+        String callNumber = kakaoPlace.phone() != null && !kakaoPlace.phone().isBlank()
+                ? kakaoPlace.phone()
+                : null;
+
+        if ((callNumber == null || callNumber.isBlank()) && googlePlace != null) {
+            callNumber = googlePlace.nationalPhoneNumber() != null
+                    ? googlePlace.nationalPhoneNumber()
+                    : googlePlace.internationalPhoneNumber();
+        }
+
         return new HospitalDetailResponse(
-                hospital.getHospitalId(),
-                hospital.getName(),
-                hospital.getAddress(),
-                hospital.getCallNumber(),
-                hospital.getBusinessHours(),
-                operationLabel,
-                hospital.is24hr(),
+                kakaoPlace.id(),
+                kakaoPlace.place_name() != null ? kakaoPlace.place_name() : "이름 없음",
+                address != null && !address.isBlank() ? address : "주소 정보 없음",
+                callNumber != null && !callNumber.isBlank() ? callNumber : "전화번호 정보 없음",
+                businessHours != null ? businessHours : "10:00 - 20:00",
+                operationLabel != null ? operationLabel : "영업시간 확인 필요",
+                is24hr,
                 distanceMeter
         );
     }
