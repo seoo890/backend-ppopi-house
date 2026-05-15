@@ -1,6 +1,7 @@
 package com.ppopi.ppopihouse.diary.service;
 
 import com.ppopi.ppopihouse.diagnosis.domain.Diagnosis;
+import com.ppopi.ppopihouse.diagnosis.domain.EyeSymptom;
 import com.ppopi.ppopihouse.diagnosis.dto.response.DiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.repository.DiagnosisRepository;
 import com.ppopi.ppopihouse.diary.domain.*;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -108,11 +110,14 @@ public class DiaryService {
     }
 
     /**
-     * 다이어리 작성을 위한 증상 체크리스트 전체 조회
+     * 다이어리 작성을 위한 증상 체크리스트 전체 조회 (Enum 기반)
      */
     public List<DiaryDto.CheckCodeResponse> findAllCheckCodes() {
-        return checkCodeRepository.findAll().stream()
-                .map(code -> new DiaryDto.CheckCodeResponse(code.getCheckId(), code.getCheckName()))
+        return Arrays.stream(EyeSymptom.values())
+                .map(symptom -> DiaryDto.CheckCodeResponse.builder()
+                        .checkId(symptom.getId())
+                        .checkName(symptom.getDescription())
+                        .build())
                 .collect(Collectors.toList());
     }
 
