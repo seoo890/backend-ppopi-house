@@ -14,7 +14,7 @@ public class DiaryDto {
         private String name;
         private String species;
         private String breed;
-        private Integer age;      // 프론트엔드 편의를 위한 계산된 나이
+        private Integer age;
         private String sex;
         private Integer color;
     }
@@ -42,15 +42,38 @@ public class DiaryDto {
         private String memo;
         private List<Long> checkIds;
     }
-    @Getter
-    @Setter
-    @Builder // 빌더 패턴 사용 가능
-    @NoArgsConstructor  // 인자 없는 기본 생성자 생성
-    @AllArgsConstructor // 모든 필드를 인자로 받는 생성자 생성
-    public static class CheckCodeResponse {
 
+    @Getter @Setter @Builder
+    @NoArgsConstructor @AllArgsConstructor
+    public static class CheckCodeResponse {
         private Long checkId;
         private String checkName;
+    }
 
+    @Getter @Builder @AllArgsConstructor
+    public static class DiaryDetailResponse {
+        private Long diaryId;
+        private LocalDate entryDate;
+        private String memo;
+        private Long petId;
+        private String petName;
+
+        // [수정] 진단 정보와 증상을 포함하도록 구성
+        private List<SymptomResponse> diagnosisSymptoms;
+        private String diagnosisResult;
+        private DiagnosisInfo diagnosisDetail; // 상세 객체가 필요할 경우를 대비
+    }
+
+    @Getter @Builder @AllArgsConstructor
+    public static class DiagnosisInfo {
+        private String imageUrl;
+        private String diseaseName;
+        private List<SymptomResponse> symptoms;
+    }
+
+    @Getter @AllArgsConstructor
+    public static class SymptomResponse {
+        private Long id;
+        private String description;
     }
 }
