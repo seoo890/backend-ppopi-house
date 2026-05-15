@@ -1,9 +1,9 @@
 package com.ppopi.ppopihouse.hospital.dto.response;
 
+import com.ppopi.ppopihouse.hospital.external.google.GooglePlaceResponse;
+import com.ppopi.ppopihouse.hospital.external.kakao.KakaoPlaceResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import com.ppopi.ppopihouse.hospital.external.google.GooglePlaceResponse;
 
 @Getter
 @AllArgsConstructor
@@ -19,23 +19,38 @@ public class HospitalDetailResponse {
     private long distanceMeter;
 
     public static HospitalDetailResponse from(
-            GooglePlaceResponse.GooglePlace place,
-            long distanceMeter,
+            KakaoPlaceResponse.Document kakaoPlace,
+            GooglePlaceResponse.GooglePlace googlePlace,
             String businessHours,
             String operationLabel,
-            boolean is24hr
+            boolean is24hr,
+            long distanceMeter
     ) {
-        String callNumber = place.nationalPhoneNumber() != null
-                ? place.nationalPhoneNumber()
-                : place.internationalPhoneNumber();
+        String address = kakaoPlace.road_address_name() != null && !kakaoPlace.road_address_name().isBlank()
+                ? kakaoPlace.road_address_name()
+                : kakaoPlace.address_name();
+
+        if ((address == null || address.isBlank()) && googlePlace != null) {
+            address = googlePlace.formattedAddress();
+        }
+
+        String callNumber = kakaoPlace.phone() != null && !kakaoPlace.phone().isBlank()
+                ? kakaoPlace.phone()
+                : null;
+
+        if ((callNumber == null || callNumber.isBlank()) && googlePlace != null) {
+            callNumber = googlePlace.nationalPhoneNumber() != null
+                    ? googlePlace.nationalPhoneNumber()
+                    : googlePlace.internationalPhoneNumber();
+        }
 
         return new HospitalDetailResponse(
-                place.id(),
-                place.displayName() != null ? place.displayName().text() : "이름 없음",
-                place.formattedAddress(),
-                callNumber,
-                businessHours,
-                operationLabel,
+                kakaoPlace.id(),
+                kakaoPlace.place_name() != null ? kakaoPlace.place_name() : "이름 없음",
+                address != null && !address.isBlank() ? address : "주소 정보 없음",
+                callNumber != null && !callNumber.isBlank() ? callNumber : "전화번호 정보 없음",
+                businessHours != null ? businessHours : "10:00 - 20:00",
+                operationLabel != null ? operationLabel : "영업시간 확인 필요",
                 is24hr,
                 distanceMeter
         );

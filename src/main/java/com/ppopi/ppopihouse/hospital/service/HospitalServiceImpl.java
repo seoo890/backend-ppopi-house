@@ -15,6 +15,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -77,15 +78,15 @@ public class HospitalServiceImpl implements HospitalService {
 
     @Override
     public HospitalDetailResponse getHospital(String hospitalId, double centerLat, double centerLng) {
-        GooglePlaceResponse.GooglePlace place = googlePlacesClient.getPlaceDetail(hospitalId);
+        KakaoPlaceResponse.Document kakaoPlace = kakaoLocalClient
+                .searchAnimalHospitals(centerLat, centerLng, DEFAULT_LIMIT)
+                .stream()
+                .filter(place -> hospitalId.equals(place.id()))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 병원입니다."));
 
-        double hospitalLat = place.location() != null && place.location().latitude() != null
-                ? place.location().latitude()
-                : centerLat;
-
-        double hospitalLng = place.location() != null && place.location().longitude() != null
-                ? place.location().longitude()
-                : centerLng;
+        double hospitalLat = Double.parseDouble(kakaoPlace.y());
+        double hospitalLng = Double.parseDouble(kakaoPlace.x());
 
         long distanceMeter = calculateDistanceMeter(
                 centerLat,
@@ -94,19 +95,30 @@ public class HospitalServiceImpl implements HospitalService {
                 hospitalLng
         );
 
-        String businessHours = getBusinessHours(place);
-        boolean is24hr = is24Hours(place);
+        GooglePlaceResponse.GooglePlace googlePlace =
+                googlePlacesClient.searchPlaceForOpeningHours(
+                        kakaoPlace.place_name(),
+                        hospitalLat,
+                        hospitalLng
+                );
 
-        String operationLabel = is24hr
-                ? "영업 중"
-                : getOperationLabel(place);
+        String businessHours = googlePlace != null
+                ? getBusinessHours(googlePlace)
+                : "10:00 - 20:00";
+
+        boolean is24hr = googlePlace != null && is24Hours(googlePlace);
+
+        String operationLabel = googlePlace != null
+                ? getOperationLabel(googlePlace)
+                : "영업시간 확인 필요";
 
         return HospitalDetailResponse.from(
-                place,
-                distanceMeter,
+                kakaoPlace,
+                googlePlace,
                 businessHours,
                 operationLabel,
-                is24hr
+                is24hr,
+                distanceMeter
         );
     }
 

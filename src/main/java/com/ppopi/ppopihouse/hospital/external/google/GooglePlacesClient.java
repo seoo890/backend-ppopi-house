@@ -103,7 +103,7 @@ public class GooglePlacesClient {
                 .trim();
     }
 
-    public GooglePlaceResponse.GooglePlace getPlaceDetail(String placeId) {
+    public GooglePlaceResponse.GooglePlace getPlaceDetail(Long placeId) {
         GooglePlaceResponse.GooglePlace response = restClient()
                 .get()
                 .uri(uriBuilder -> uriBuilder
