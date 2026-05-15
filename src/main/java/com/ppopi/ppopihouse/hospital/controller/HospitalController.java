@@ -46,8 +46,8 @@ public class HospitalController {
     )
     @GetMapping("/{hospitalId}")
     public HospitalDetailResponse getHospital(
-            @Parameter(description = "조회할 병원 ID", example = "1")
-            @PathVariable Long hospitalId,
+            @Parameter(description = "조회할 병원 Place ID")
+            @PathVariable String hospitalId,
 
             @Parameter(description = "사용자 또는 지도 중심 위도", example = "37.5665")
             @RequestParam double centerLat,
@@ -57,4 +57,5 @@ public class HospitalController {
     ) {
         return hospitalService.getHospital(hospitalId, centerLat, centerLng);
     }
+
 }
