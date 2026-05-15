@@ -11,6 +11,7 @@ import com.ppopi.ppopihouse.diagnosis.dto.response.RecentDiagnosisResponse;
 import com.ppopi.ppopihouse.diagnosis.repository.DiagnosisRepository;
 import com.ppopi.ppopihouse.diagnosis.repository.EyeDiseaseCodeRepository;
 import com.ppopi.ppopihouse.diary.domain.DiaryEntry;
+import com.ppopi.ppopihouse.diary.dto.DiaryDto;
 import com.ppopi.ppopihouse.diary.repository.DiaryRepository;
 import com.ppopi.ppopihouse.global.infra.cloud.ImageStorageService;
 import com.ppopi.ppopihouse.pet.domain.Pet;
@@ -232,7 +233,37 @@ public class DiagnosisService {
                 formatConfidence(aiResponse.getTriageConfidence()),
                 aiResponse.getGuidanceAction(),
                 aiResponse.getGuidanceMessage(),
-                aiResponse.getGuidanceWarning()
+                aiResponse.getGuidanceWarning(),
+                null
+        );
+    }
+    /**
+     * [신규 메서드 추가] 체크리스트(증상)를 포함하여 반환하는 버전
+     */
+    private DiagnosisResponse toDiagnosisResponseWithSymptoms(
+            String imageUrl,
+            AiDiagnosisResponse aiResponse,
+            EyeDiseaseCode disease,
+            List<Long> symptomIds // 프론트에서 넘어온 선택 ID 리스트
+    ) {
+        // ID 리스트를 SymptomResponse 리스트로 변환 (Enum 활용)
+        List<DiaryDto.SymptomResponse> symptomList = symptomIds.stream()
+                .map(id -> {
+                    EyeSymptom s = EyeSymptom.fromId(id);
+                    return new DiaryDto.SymptomResponse(s.getId(), s.getDescription());
+                })
+                .collect(Collectors.toList());
+
+        return new DiagnosisResponse(
+                imageUrl,
+                formatStatus(aiResponse.getTriage()),
+                disease.getDiseaseName(),
+                formatAffectedArea(disease.getAffectedArea()),
+                formatConfidence(aiResponse.getTriageConfidence()),
+                aiResponse.getGuidanceAction(),
+                aiResponse.getGuidanceMessage(),
+                aiResponse.getGuidanceWarning(),
+                symptomList // 체크리스트 포함
         );
     }
 
