@@ -110,13 +110,15 @@ public class DiaryService {
     }
 
     /**
-     * 다이어리 작성을 위한 증상 체크리스트 전체 조회 (Enum 기반)
+     * 다이어리 작성을 위한 일반 건강 체크리스트 전체 조회 (DB 기반)
      */
     public List<DiaryDto.CheckCodeResponse> findAllCheckCodes() {
-        return Arrays.stream(EyeSymptom.values())
-                .map(symptom -> DiaryDto.CheckCodeResponse.builder()
-                        .checkId(symptom.getId())
-                        .checkName(symptom.getDescription())
+        // 1. 기존 EyeSymptom.values() 스트림 로직 전면 제거
+        // 2. DB에서 마스터 데이터를 조회하여 DTO로 매핑
+        return checkCodeRepository.findAll().stream()
+                .map(code -> DiaryDto.CheckCodeResponse.builder()
+                        .checkId(code.getCheckId())
+                        .checkName(code.getCheckName())
                         .build())
                 .collect(Collectors.toList());
     }

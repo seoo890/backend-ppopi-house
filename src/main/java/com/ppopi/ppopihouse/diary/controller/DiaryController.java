@@ -42,7 +42,10 @@ public class DiaryController {
         return ResponseEntity.ok(diaryService.findDailyDiaries(userDetails.getMemberId(), year, month, day));
     }
 
-    @Operation(summary = "증상 체크리스트 목록 조회", description = "다이어리 생성 시 필요한 증상 목록을 조회합니다.")
+    @Operation(
+            summary = "일반 건강 체크리스트 목록 조회", // 기존: 증상 체크리스트 목록 조회
+            description = "다이어리 생성 시 필요한 일반 건강 항목(식욕, 구토 등) 목록을 조회합니다."
+    )
     @GetMapping("/checks")
     public ResponseEntity<List<DiaryDto.CheckCodeResponse>> getCheckCodes() {
         return ResponseEntity.ok(diaryService.findAllCheckCodes());
