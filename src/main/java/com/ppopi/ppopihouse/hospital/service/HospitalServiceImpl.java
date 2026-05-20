@@ -54,21 +54,10 @@ public class HospitalServiceImpl implements HospitalService {
                                     hospitalLng
                             );
 
-                    String businessHours = googlePlace != null
-                            ? getBusinessHours(googlePlace)
-                            : "10:00 - 20:00";
-
                     boolean is24hr = googlePlace != null && is24Hours(googlePlace);
-
-                    String operationLabel = googlePlace != null
-                            ? getOperationLabel(googlePlace)
-                            : getOperationLabelByDefaultHours();
 
                     return HospitalListResponse.from(
                             kakaoPlace,
-                            googlePlace,
-                            businessHours,
-                            operationLabel,
                             is24hr,
                             distanceMeter
                     );
