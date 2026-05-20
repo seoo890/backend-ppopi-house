@@ -1,16 +1,14 @@
 package com.ppopi.ppopihouse.diagnosis.dto.response;
 
 import com.ppopi.ppopihouse.diary.dto.DiaryDto;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Setter // 추가
 @Builder // 빌더 패턴 도입
+@NoArgsConstructor
 @AllArgsConstructor
 public class DiagnosisResponse {
 
