@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -165,7 +166,9 @@ public class DiaryService {
 
         DiaryEntry entry = new DiaryEntry();
         entry.setPet(pet);
-        entry.setEntryDate(LocalDate.now());
+        entry.setEntryDate(
+                LocalDate.now(ZoneId.of("Asia/Seoul"))
+        );
         entry.setMemo(request.getMemo());
         diaryRepository.save(entry);
 

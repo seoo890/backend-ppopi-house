@@ -1,5 +1,6 @@
 package com.ppopi.ppopihouse.hospital.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ppopi.ppopihouse.hospital.external.kakao.KakaoPlaceResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,6 +14,8 @@ public class HospitalListResponse {
     private double latitude;
     private double longitude;
     private long distanceMeter;
+
+    @JsonProperty("is24hr")
     private boolean is24hr;
 
     public static HospitalListResponse from(
