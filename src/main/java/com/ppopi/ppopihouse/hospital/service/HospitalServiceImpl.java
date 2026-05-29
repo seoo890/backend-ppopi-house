@@ -6,8 +6,10 @@ import com.ppopi.ppopihouse.hospital.dto.response.HospitalListResponse;
 import com.ppopi.ppopihouse.hospital.external.google.GooglePlacesClient;
 import com.ppopi.ppopihouse.hospital.external.kakao.KakaoLocalClient;
 import com.ppopi.ppopihouse.hospital.external.kakao.KakaoPlaceResponse;
+import com.ppopi.ppopihouse.hospital.cache.HospitalCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 
 import com.ppopi.ppopihouse.hospital.external.google.GooglePlaceResponse;
 
@@ -24,6 +26,7 @@ public class HospitalServiceImpl implements HospitalService {
     private static final int DEFAULT_LIMIT = 15;
     private final GooglePlacesClient googlePlacesClient;
     private final KakaoLocalClient kakaoLocalClient;
+    private final HospitalCacheService hospitalCacheService;
 
     @Override
     public List<HospitalListResponse> getHospitals(HospitalSearchRequest request) {
@@ -37,6 +40,8 @@ public class HospitalServiceImpl implements HospitalService {
                 .stream()
                 .filter(kakaoPlace -> isInBounds(kakaoPlace, request))
                 .map(kakaoPlace -> {
+                    hospitalCacheService.save(kakaoPlace);
+                    
                     double hospitalLat = Double.parseDouble(kakaoPlace.y());
                     double hospitalLng = Double.parseDouble(kakaoPlace.x());
 
@@ -67,12 +72,11 @@ public class HospitalServiceImpl implements HospitalService {
 
     @Override
     public HospitalDetailResponse getHospital(String hospitalId, double centerLat, double centerLng) {
-        KakaoPlaceResponse.Document kakaoPlace = kakaoLocalClient
-                .searchAnimalHospitals(centerLat, centerLng, DEFAULT_LIMIT)
-                .stream()
-                .filter(place -> hospitalId.equals(place.id()))
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 병원입니다."));
+        KakaoPlaceResponse.Document kakaoPlace = hospitalCacheService.get(hospitalId);
+
+        if (kakaoPlace == null) {
+            throw new NoSuchElementException("병원 정보가 만료되었습니다. 병원 목록을 다시 조회해 주세요.");
+        }
 
         double hospitalLat = Double.parseDouble(kakaoPlace.y());
         double hospitalLng = Double.parseDouble(kakaoPlace.x());
