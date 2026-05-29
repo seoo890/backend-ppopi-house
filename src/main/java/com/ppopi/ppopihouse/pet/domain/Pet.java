@@ -2,9 +2,7 @@ package com.ppopi.ppopihouse.pet.domain;
 
 import com.ppopi.ppopihouse.member.domain.Member;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +10,8 @@ import java.time.LocalDateTime;
 @Table(name = "pet")
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class Pet {
 
