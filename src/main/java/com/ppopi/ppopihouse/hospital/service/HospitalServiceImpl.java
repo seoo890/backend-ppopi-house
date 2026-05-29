@@ -101,9 +101,7 @@ public class HospitalServiceImpl implements HospitalService {
 
         boolean is24hr = googlePlace != null && is24Hours(googlePlace);
 
-        String operationLabel = googlePlace != null
-                ? getOperationLabel(googlePlace)
-                : "영업시간 확인 필요";
+        String operationLabel = getOperationLabelByBusinessHours(businessHours);
 
         return HospitalDetailResponse.from(
                 kakaoPlace,
@@ -137,7 +135,6 @@ public class HospitalServiceImpl implements HospitalService {
             return "10:00 - 20:00";
         }
 
-        // 1순위: weekdayDescriptions가 있으면 오늘 요일 설명에서 추출
         if (place.regularOpeningHours().weekdayDescriptions() != null
                 && !place.regularOpeningHours().weekdayDescriptions().isEmpty()) {
             String todayPrefix = getTodayKoreanPrefix();
@@ -149,7 +146,6 @@ public class HospitalServiceImpl implements HospitalService {
                     .orElse("10:00 - 20:00");
         }
 
-        // 2순위: weekdayDescriptions가 없으면 periods로 오늘 영업시간 계산
         if (place.regularOpeningHours().periods() != null
                 && !place.regularOpeningHours().periods().isEmpty()) {
             return getTodayBusinessHoursFromPeriods(place.regularOpeningHours().periods());
@@ -183,15 +179,32 @@ public class HospitalServiceImpl implements HospitalService {
                 : "영업 종료";
     }
 
-    private String getOperationLabelByDefaultHours() {
-        LocalTime now = LocalTime.now();
+    private String getOperationLabelByBusinessHours(String businessHours) {
+        if (businessHours == null || businessHours.isBlank()) {
+            return "영업시간 확인 필요";
+        }
 
-        LocalTime open = LocalTime.of(10, 0);
-        LocalTime close = LocalTime.of(20, 0);
+        if (businessHours.equals("휴무")) {
+            return "영업 종료";
+        }
+
+        if (businessHours.equals("00:00 - 24:00")) {
+            return "영업 중";
+        }
+
+        String[] parts = businessHours.split("\\s*-\\s*");
+
+        if (parts.length < 2) {
+            return "영업시간 확인 필요";
+        }
+
+        LocalTime now = LocalTime.now(ZoneId.of("Asia/Seoul"));
+        LocalTime open = LocalTime.parse(parts[0]);
+        LocalTime close = LocalTime.parse(parts[1]);
 
         return !now.isBefore(open) && now.isBefore(close)
-                ? "영업 중"
-                : "영업 종료";
+            ? "영업 중"
+            : "영업 종료";
     }
 
     private void validateSearchRequest(HospitalSearchRequest request) {
