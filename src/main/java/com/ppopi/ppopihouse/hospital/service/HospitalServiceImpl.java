@@ -40,7 +40,7 @@ public class HospitalServiceImpl implements HospitalService {
                 .stream()
                 .filter(kakaoPlace -> isInBounds(kakaoPlace, request))
                 .map(kakaoPlace -> {
-                    hospitalCacheService.save(kakaoPlace);
+                    hospitalCacheService.saveCoordinate(kakaoPlace);
                     
                     double hospitalLat = Double.parseDouble(kakaoPlace.y());
                     double hospitalLng = Double.parseDouble(kakaoPlace.x());
@@ -72,14 +72,21 @@ public class HospitalServiceImpl implements HospitalService {
 
     @Override
     public HospitalDetailResponse getHospital(String hospitalId, double centerLat, double centerLng) {
-        KakaoPlaceResponse.Document kakaoPlace = hospitalCacheService.get(hospitalId);
+        double[] hospitalCoordinate = hospitalCacheService.getCoordinate(hospitalId);
 
-        if (kakaoPlace == null) {
+        if (hospitalCoordinate == null) {
             throw new NoSuchElementException("병원 정보가 만료되었습니다. 병원 목록을 다시 조회해 주세요.");
         }
 
-        double hospitalLat = Double.parseDouble(kakaoPlace.y());
-        double hospitalLng = Double.parseDouble(kakaoPlace.x());
+        double hospitalLat = hospitalCoordinate[0];
+        double hospitalLng = hospitalCoordinate[1];
+
+        KakaoPlaceResponse.Document kakaoPlace = kakaoLocalClient
+            .searchAnimalHospitals(hospitalLat, hospitalLng, DEFAULT_LIMIT)
+            .stream()
+            .filter(place -> hospitalId.equals(place.id()))
+            .findFirst()
+            .orElseThrow(() -> new NoSuchElementException("존재하지 않는 병원입니다."));
 
         long distanceMeter = calculateDistanceMeter(
                 centerLat,
