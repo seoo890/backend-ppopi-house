@@ -176,17 +176,6 @@ public class HospitalServiceImpl implements HospitalService {
                 );
     }
 
-    private String getOperationLabel(GooglePlaceResponse.GooglePlace place) {
-        if (place.regularOpeningHours() == null
-                || place.regularOpeningHours().openNow() == null) {
-            return getOperationLabelByDefaultHours();
-        }
-
-        return Boolean.TRUE.equals(place.regularOpeningHours().openNow())
-                ? "영업 중"
-                : "영업 종료";
-    }
-
     private String getOperationLabelByBusinessHours(String businessHours) {
         if (businessHours == null || businessHours.isBlank()) {
             return "영업시간 확인 필요";
