@@ -36,12 +36,18 @@ public class DiagnosisService {
     private final AiDiagnosisClient aiDiagnosisClient;
 
     public DiagnosisResponse diagnose(
+            Long memberId, // 🌟 컨트롤러와 싱크 결합을 위한 인자 추가
             Long petId,
             MultipartFile image,
             List<Long> symptomIds
     ) {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 반려동물입니다."));
+
+        // 🌟 타인의 반려동물 악의적 진단 요청 차단을 위한 소유권 검증 레이어 도입
+        if (!pet.getMember().getMemberId().equals(memberId)) {
+            throw new SecurityException("해당 반려동물에 대한 접근 권한이 없습니다.");
+        }
 
         ImageValidationResponse validation = imageValidationClient.validate(image);
 
@@ -107,9 +113,7 @@ public class DiagnosisService {
         diagnosis.setGuideAction(aiResponse.getGuidanceAction());
         diagnosis.setGuideWarn(aiResponse.getGuidanceWarning());
 
-        // 🌟 [비즈니스 로직 수정 변경점]
-        // AI 진단 신뢰도 점수가 40%(0.4) 이상인 경우에만 영속성 컨텍스트(DB 다이어리)에 등록을 수행함
-        // 0.4 미만인 경우에는 저장을 수행하지 않고 사용자 화면에 결과만 리턴하도록 흐름 제어
+        // AI 진단 신뢰도 점수가 40%(0.4) 이상인 경우에만 영속성 계층(DB)에 등록을 수행함
         if (aiResponse.getTriageConfidence() >= 0.4f) {
             diagnosisRepository.save(diagnosis);
         }
@@ -216,7 +220,7 @@ public class DiagnosisService {
 
     private List<RecentDiagnosisResponse.SymptomChecklist> buildSymptomChecklist(List<Long> checkedIds) {
         return Arrays.stream(EyeSymptom.values())
-                .filter(symptom -> checkedIds.contains(symptom.getId())) // ✅ 체크된 것만 남김
+                .filter(symptom -> checkedIds.contains(symptom.getId()))
                 .map(symptom -> new RecentDiagnosisResponse.SymptomChecklist(
                         symptom.getId(),
                         symptom.getDescription()
