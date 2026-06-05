@@ -4,15 +4,13 @@ import com.ppopi.ppopihouse.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "pet")
 @Getter
 @Setter
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor // 🌟 @Builder 사용 시 무조건 세트로 들어가야 하는 전산학적 정석 생성자
 public class Pet {
 
     @Id
@@ -42,18 +40,7 @@ public class Pet {
     @Column(nullable = false)
     private int color;
 
+    @Builder.Default // 🌟 컴파일 경고를 영구 해제하고 빌더 가동 시 초기값 false 주입을 강제하는 속성
     @Column(nullable = false)
     private boolean deleted = false;
-
-    private LocalDateTime deletedAt;
-
-    public void delete(LocalDateTime deletedAt) {
-        this.deleted = true;
-        this.deletedAt = deletedAt;
-    }
-
-    public void restore() {
-        this.deleted = false;
-        this.deletedAt = null;
-    }
 }
