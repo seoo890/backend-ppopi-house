@@ -1,15 +1,14 @@
 package com.ppopi.ppopihouse.diagnosis.dto.response;
 
-import com.ppopi.ppopihouse.diary.dto.DiaryDto;
-import lombok.*;
-
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter // 추가
-@Builder // 빌더 패턴 도입
+@Builder
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor // 🌟 서비스 레이어에서 8개 인자로 생성자를 호출할 수 있도록 명시적 선언
 public class DiagnosisResponse {
 
     private String imageUrl;
@@ -20,6 +19,4 @@ public class DiagnosisResponse {
     private String guidanceAction;
     private String guidanceMessage;
     private String guidanceWarning;
-    // [추가] 진단 시 선택했던 증상(체크리스트) 상세 정보
-    private List<DiaryDto.SymptomResponse> symptoms;
 }
